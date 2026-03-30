@@ -206,8 +206,13 @@ body::before {
   inset: 0;
   border-radius: inherit;
   opacity: 0;
+  pointer-events: none;  /* ← fix: never block inputs/buttons inside cards */
+  z-index: 0;
   transition: opacity var(--transition-med);
 }
+  /* Ensure card content always sits above the decorative ::before overlay */
+  .card > * { position: relative; z-index: 1; }
+
 .card.purple::before { background: radial-gradient(circle at top left, rgba(108,99,255,0.08), transparent 60%); }
 .card.pink::before   { background: radial-gradient(circle at top left, rgba(255,101,132,0.08), transparent 60%); }
 .card.cyan::before   { background: radial-gradient(circle at top left, rgba(0,212,255,0.08), transparent 60%); }
