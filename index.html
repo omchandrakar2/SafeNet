@@ -13,8 +13,170 @@
   <!-- MarkerCluster -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+  <style>
+    /* ── Navbar — brighter, more opaque, rainbow top-line ── */
+    .navbar {
+      background: rgba(255,255,255,0.82) !important;
+      border-bottom: 1.5px solid rgba(168,85,247,0.30) !important;
+      box-shadow: 0 2px 32px rgba(168,85,247,0.18), 0 1px 0 rgba(255,255,255,0.6) inset !important;
+      position: fixed;
+    }
+    [data-theme="dark"] .navbar {
+      background: rgba(15,8,38,0.92) !important;
+      border-bottom: 1.5px solid rgba(167,139,250,0.30) !important;
+      box-shadow: 0 2px 32px rgba(139,92,246,0.22) !important;
+    }
+    /* Animated rainbow stripe across top of navbar */
+    .navbar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2.5px;
+      background: linear-gradient(90deg, #f472b6, #a78bfa, #34d399, #fbbf24, #06b6d4, #f472b6);
+      background-size: 300% 100%;
+      animation: navRainbow 6s linear infinite;
+    }
+    @keyframes navRainbow {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 300% 50%; }
+    }
+
+    /* ── Nav Buttons — bright white glass with purple glow ── */
+    .nav-btn {
+      background: rgba(255,255,255,0.88) !important;
+      border: 1px solid rgba(168,85,247,0.28) !important;
+      box-shadow: 0 2px 8px rgba(168,85,247,0.10);
+      color: #5b4b8a !important;
+    }
+    [data-theme="dark"] .nav-btn {
+      background: rgba(28,14,60,0.88) !important;
+      border-color: rgba(167,139,250,0.28) !important;
+      color: #c4b5fd !important;
+    }
+    .nav-btn:hover {
+      background: #fff !important;
+      border-color: #a855f7 !important;
+      box-shadow: 0 0 18px rgba(168,85,247,0.38) !important;
+      transform: translateY(-2px);
+    }
+
+    /* ── Nav Pill (Live Reports) — vivid mint glow ── */
+    .nav-pill {
+      background: rgba(52,211,153,0.14) !important;
+      border: 1px solid rgba(52,211,153,0.38) !important;
+      color: #059669 !important;
+      font-weight: 800 !important;
+      box-shadow: 0 0 12px rgba(52,211,153,0.22);
+      letter-spacing: 0.04em;
+    }
+    [data-theme="dark"] .nav-pill {
+      background: rgba(52,211,153,0.10) !important;
+      border-color: rgba(52,211,153,0.28) !important;
+      color: #34d399 !important;
+      box-shadow: 0 0 12px rgba(52,211,153,0.18);
+    }
+
+    /* ── Nav Avatar — stronger glow ── */
+    .nav-avatar {
+      box-shadow: 0 0 14px rgba(168,85,247,0.35);
+    }
+    .nav-avatar:hover {
+      box-shadow: 0 0 24px rgba(168,85,247,0.55) !important;
+    }
+
+    /* ── Sidebar — brighter glass panel ── */
+    .sidebar {
+      background: rgba(255,255,255,0.78) !important;
+      border: 1px solid rgba(168,85,247,0.28) !important;
+      box-shadow: 0 12px 48px rgba(130,80,200,0.20), 0 2px 8px rgba(0,0,0,0.06) !important;
+      backdrop-filter: blur(32px) saturate(2.2) !important;
+      -webkit-backdrop-filter: blur(32px) saturate(2.2) !important;
+    }
+    [data-theme="dark"] .sidebar {
+      background: rgba(18,10,42,0.88) !important;
+      border-color: rgba(167,139,250,0.28) !important;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.55), 0 0 0 1px rgba(167,139,250,0.10) inset !important;
+    }
+
+    /* ── My Reports Panel — bright & vivid ── */
+    .panel {
+      background: rgba(255,255,255,0.82) !important;
+      border: 1px solid rgba(168,85,247,0.28) !important;
+      box-shadow: 0 32px 80px rgba(130,80,200,0.22), 0 4px 16px rgba(0,0,0,0.08) !important;
+      backdrop-filter: blur(32px) saturate(2.2) !important;
+      -webkit-backdrop-filter: blur(32px) saturate(2.2) !important;
+    }
+    [data-theme="dark"] .panel {
+      background: rgba(18,10,42,0.90) !important;
+      border-color: rgba(167,139,250,0.28) !important;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.60), 0 0 0 1px rgba(167,139,250,0.10) inset !important;
+    }
+    /* Panel header — rainbow top accent */
+    .panel-header {
+      background: linear-gradient(135deg, rgba(168,85,247,0.06), rgba(6,182,212,0.04));
+      border-bottom: 1px solid rgba(168,85,247,0.20) !important;
+    }
+    .panel-title {
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900 !important;
+    }
+
+    /* ── Route Panel — bright glass ── */
+    .route-panel {
+      background: rgba(255,255,255,0.82) !important;
+      border: 1px solid rgba(168,85,247,0.28) !important;
+      box-shadow: 0 20px 60px rgba(130,80,200,0.22), 0 4px 16px rgba(0,0,0,0.08) !important;
+      backdrop-filter: blur(32px) saturate(2.2) !important;
+      -webkit-backdrop-filter: blur(32px) saturate(2.2) !important;
+    }
+    [data-theme="dark"] .route-panel {
+      background: rgba(18,10,42,0.90) !important;
+      border-color: rgba(167,139,250,0.28) !important;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.60) !important;
+    }
+    .route-panel-title {
+      background: linear-gradient(135deg, #a855f7, #06b6d4);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900 !important;
+    }
+
+    /* ── Sidebar stat mini-cards & filter chips — brighter ── */
+    .stat-mini {
+      background: rgba(255,255,255,0.72) !important;
+      border-color: rgba(168,85,247,0.18) !important;
+    }
+    [data-theme="dark"] .stat-mini {
+      background: rgba(168,85,247,0.08) !important;
+    }
+    .filter-chip {
+      background: rgba(255,255,255,0.70) !important;
+      border-color: rgba(168,85,247,0.22) !important;
+    }
+    [data-theme="dark"] .filter-chip {
+      background: rgba(168,85,247,0.08) !important;
+    }
+    .search-input {
+      background: rgba(255,255,255,0.82) !important;
+      border-color: rgba(168,85,247,0.22) !important;
+    }
+    [data-theme="dark"] .search-input {
+      background: rgba(168,85,247,0.08) !important;
+    }
+  </style>
+
 </head>
 <body>
+
+<!-- ─── Background (matches login.html) ───────────────────── -->
+<div id="bg-image"></div>
+<div id="bg-overlay"></div>
+<div id="grid-overlay"></div>
+<div id="scan-line"></div>
 
 <!-- ─── Loading overlay ─────────────────────────────── -->
 <div class="loading-overlay" id="loading">

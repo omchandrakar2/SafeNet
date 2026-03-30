@@ -1,6 +1,6 @@
 /* =====================================================
-   SAFENET — Premium Design System
-   Umbrella · Lavender · Teal · Mint · Glassmorphism
+   SAFENET — Futuristic Umbrella Design System
+   Login-matched: Lavender · Purple · Teal · Glassmorphism
    ===================================================== */
 
 /* ─── Google Fonts ─────────────────────────────────── */
@@ -8,35 +8,36 @@
 
 /* ─── CSS Variables (Light — Umbrella Palette) ─────── */
 :root {
-  /* brand — drawn from umbrella purples, teals, mints */
-  --primary:       #a855f7;           /* vivid lavender-purple  */
-  --primary-dark:  #7c3aed;           /* deep violet            */
-  --primary-light: #c084fc;           /* soft lilac             */
-  --accent:        #06b6d4;           /* umbrella teal/cyan     */
+  /* brand — matches login.html palette */
+  --primary:       #a855f7;
+  --primary-dark:  #7c3aed;
+  --primary-light: #c084fc;
+  --accent:        #06b6d4;
   --gradient:      linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #06b6d4 100%);
   --gradient-warm: linear-gradient(135deg, #f472b6 0%, #a855f7 50%, #fbbf24 100%);
+  --top-line:      linear-gradient(90deg,#f472b6,#a78bfa,#34d399,#fbbf24);
 
-  /* surfaces */
-  --bg:            #f5f0ff;           /* faint lavender wash    */
-  --bg-card:       rgba(255,255,255,0.72);
-  --bg-modal:      rgba(255,255,255,0.92);
-  --bg-sidebar:    rgba(250,246,255,0.82);
-  --bg-nav:        rgba(255,255,255,0.85);
+  /* surfaces — glass with purple tint */
+  --bg:            #f5f0ff;
+  --bg-card:       rgba(255,255,255,0.52);
+  --bg-modal:      rgba(255,255,255,0.72);
+  --bg-sidebar:    rgba(255,255,255,0.42);
+  --bg-nav:        rgba(255,255,255,0.55);
 
   /* glass */
-  --glass-blur:    18px;
-  --glass-border:  rgba(168,85,247,0.15);
-  --glass-border2: rgba(168,85,247,0.06);
+  --glass-blur:    20px;
+  --glass-border:  rgba(168,85,247,0.22);
+  --glass-border2: rgba(168,85,247,0.10);
 
   /* text */
-  --text:          #1e1240;           /* deep indigo            */
-  --text-2:        #4c3d85;           /* mid-purple             */
-  --text-3:        #9d8ec4;           /* soft muted lavender    */
+  --text:          #1e1240;
+  --text-2:        #5b4b8a;
+  --text-3:        #9d8ec4;
 
   /* risk */
-  --risk-low:      #34d399;           /* mint green             */
-  --risk-med:      #fbbf24;           /* umbrella golden yellow */
-  --risk-high:     #f43f5e;           /* coral-red              */
+  --risk-low:      #34d399;
+  --risk-med:      #fbbf24;
+  --risk-high:     #f43f5e;
 
   /* status */
   --success:       #34d399;
@@ -51,33 +52,36 @@
   --r-xl:  20px;
   --r-full:9999px;
 
-  /* shadows — tinted purple */
-  --shadow-sm:  0 1px 4px rgba(168,85,247,0.07);
-  --shadow-md:  0 4px 18px rgba(168,85,247,0.10);
-  --shadow-lg:  0 8px 36px rgba(168,85,247,0.15);
-  --shadow-glow:0 0 32px rgba(168,85,247,0.22);
+  /* shadows — purple glow */
+  --shadow-sm:  0 1px 4px rgba(168,85,247,0.10);
+  --shadow-md:  0 4px 18px rgba(168,85,247,0.18);
+  --shadow-lg:  0 8px 36px rgba(130,80,200,0.22), 0 4px 24px rgba(0,0,0,0.08);
+  --shadow-glow:0 0 32px rgba(168,85,247,0.35);
 
   /* nav */
   --nav-h: 60px;
+
+  /* scan line + grid overlay */
+  --grid-color: rgba(168,85,247,0.05);
+  --scan-grad:  linear-gradient(90deg,transparent,rgba(168,85,247,0.35) 40%,rgba(168,85,247,0.6) 50%,rgba(168,85,247,0.35) 60%,transparent);
 }
 
 /* ─── Dark Mode (Umbrella at Night) ────────────────── */
 [data-theme="dark"] {
-  --bg:           #0d0818;            /* deep night indigo      */
-  --bg-card:      rgba(22,14,45,0.78);
-  --bg-modal:     rgba(18,10,38,0.95);
-  --bg-sidebar:   rgba(18,12,40,0.88);
-  --bg-nav:       rgba(14,8,32,0.90);
-  --glass-border: rgba(192,132,252,0.20);
-  --glass-border2:rgba(255,255,255,0.06);
-  --text:         #f0e8ff;            /* soft white-lavender    */
-  --text-2:       #c4b5fd;            /* lavender mid           */
-  --text-3:       #7c6fa0;            /* dim purple             */
-  --shadow-sm:    0 1px 4px rgba(0,0,0,0.3);
-  --shadow-md:    0 4px 18px rgba(0,0,0,0.4);
-  --shadow-lg:    0 8px 36px rgba(0,0,0,0.55);
-  --shadow-glow:  0 0 32px rgba(192,132,252,0.30);
-  /* keep brand vars consistent in dark */
+  --bg:           #0d0818;
+  --bg-card:      rgba(10,8,35,0.72);
+  --bg-modal:     rgba(10,8,35,0.88);
+  --bg-sidebar:   rgba(10,8,35,0.82);
+  --bg-nav:       rgba(5,3,20,0.82);
+  --glass-border: rgba(167,139,250,0.22);
+  --glass-border2:rgba(167,139,250,0.08);
+  --text:         #f0e8ff;
+  --text-2:       #c4b5fd;
+  --text-3:       #7c6fa0;
+  --shadow-sm:    0 1px 4px rgba(0,0,0,0.4);
+  --shadow-md:    0 4px 18px rgba(0,0,0,0.5);
+  --shadow-lg:    0 8px 36px rgba(0,0,0,0.65), 0 0 60px rgba(139,92,246,0.10);
+  --shadow-glow:  0 0 32px rgba(192,132,252,0.35);
   --primary:       #c084fc;
   --primary-dark:  #a855f7;
   --primary-light: #ddd6fe;
@@ -88,6 +92,9 @@
   --warning:       #fbbf24;
   --danger:        #fb7185;
   --info:          #818cf8;
+
+  --grid-color: rgba(167,139,250,0.04);
+  --scan-grad:  linear-gradient(90deg,transparent,rgba(192,132,252,0.4) 40%,rgba(192,132,252,0.8) 50%,rgba(192,132,252,0.4) 60%,transparent);
 }
 
 /* ─── Reset ────────────────────────────────────────── */
@@ -101,12 +108,128 @@ body {
   min-height: 100vh;
 }
 a { color: var(--primary); text-decoration: none; }
+
+/* ─── Background — Umbrella Image (login-matched) ───── */
+#bg-image {
+  position: fixed; inset: 0; z-index: 0;
+  background: url('../umbrella_bg.png') center center / cover no-repeat;
+  transition: filter 0.5s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+}
+[data-theme="light"] #bg-image { filter: brightness(1.05) saturate(1.1); }
+[data-theme="dark"]  #bg-image { filter: brightness(0.28) saturate(0.7) hue-rotate(20deg); }
+
+#bg-overlay {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  transition: background 0.5s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="light"] #bg-overlay {
+  background: linear-gradient(135deg,
+    rgba(245,208,254,0.40) 0%,
+    rgba(196,181,253,0.30) 30%,
+    rgba(167,243,208,0.22) 65%,
+    rgba(253,186,116,0.28) 100%);
+}
+[data-theme="dark"] #bg-overlay {
+  background: linear-gradient(135deg,
+    rgba(10,5,40,0.72) 0%,
+    rgba(30,10,60,0.55) 50%,
+    rgba(5,15,30,0.72) 100%);
+}
+
+#grid-overlay {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background-image:
+    linear-gradient(var(--grid-color) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+  background-size: 55px 55px;
+}
+
+#scan-line {
+  position: fixed; left:0; right:0; height:2px; z-index:3; pointer-events:none;
+  animation: scanDown 10s linear infinite;
+  background: var(--scan-grad);
+}
+@keyframes scanDown {
+  0%   { top:-2px; opacity:0; }
+  5%   { opacity:1; }
+  95%  { opacity:1; }
+  100% { top:100vh; opacity:0; }
+}
+
+/* ─── ADMIN Background — Animated Gradient Blobs ────── */
+/* Overrides #bg-overlay when .admin-bg class is present */
+#bg-overlay.admin-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  transition: background 0.5s ease;
+}
+
+[data-theme="light"] #bg-overlay.admin-bg {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 8%,   rgba(168,85,247,0.20) 0%, transparent 68%),
+    radial-gradient(ellipse 55% 50% at 88% 80%,  rgba(244,114,182,0.16) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 45% at 55% 45%,  rgba(6,182,212,0.12)  0%, transparent 65%),
+    radial-gradient(ellipse 40% 35% at 30% 75%,  rgba(34,211,153,0.10) 0%, transparent 65%),
+    linear-gradient(145deg, #f0e8ff 0%, #ede9fe 35%, #e0f2fe 70%, #f5f0ff 100%);
+  animation: adminBgShift 14s ease-in-out infinite alternate;
+}
+
+[data-theme="dark"] #bg-overlay.admin-bg {
+  background:
+    radial-gradient(ellipse 70% 55% at 12% 8%,   rgba(168,85,247,0.18) 0%, transparent 70%),
+    radial-gradient(ellipse 55% 50% at 88% 80%,  rgba(244,114,182,0.12) 0%, transparent 68%),
+    radial-gradient(ellipse 60% 45% at 55% 45%,  rgba(6,182,212,0.08)  0%, transparent 68%),
+    radial-gradient(ellipse 40% 35% at 30% 75%,  rgba(34,211,153,0.07) 0%, transparent 65%),
+    linear-gradient(145deg, #0d0818 0%, #120a28 40%, #0a1020 80%, #080615 100%);
+  animation: adminBgShift 14s ease-in-out infinite alternate;
+}
+
+@keyframes adminBgShift {
+  0%   { background-position: 0% 0%; filter: hue-rotate(0deg); }
+  50%  { filter: hue-rotate(12deg); }
+  100% { background-position: 100% 100%; filter: hue-rotate(0deg); }
+}
+
+/* ─── ADMIN Navbar — Brighter & More Opaque ─────────── */
+.admin-page .navbar,
+body:has(.admin-layout) .navbar {
+  background: rgba(255,255,255,0.82) !important;
+  border-bottom: 1.5px solid rgba(168,85,247,0.30) !important;
+  box-shadow: 0 2px 32px rgba(168,85,247,0.18), 0 1px 0 rgba(255,255,255,0.6) inset !important;
+}
+[data-theme="dark"] body:has(.admin-layout) .navbar {
+  background: rgba(18,10,40,0.92) !important;
+  border-bottom: 1.5px solid rgba(167,139,250,0.32) !important;
+  box-shadow: 0 2px 32px rgba(139,92,246,0.22) !important;
+}
+
+/* ─── ADMIN Panels & Cards — Lighter / Brighter ──────── */
+body:has(.admin-layout) .admin-stat-card,
+body:has(.admin-layout) .admin-filters,
+body:has(.admin-layout) .admin-table-wrap,
+body:has(.admin-layout) .evidence-card {
+  background: rgba(255,255,255,0.78) !important;
+  border: 1px solid rgba(168,85,247,0.28) !important;
+  backdrop-filter: blur(28px) saturate(2);
+  -webkit-backdrop-filter: blur(28px) saturate(2);
+  box-shadow: 0 8px 32px rgba(168,85,247,0.14), 0 2px 8px rgba(0,0,0,0.06) !important;
+}
+[data-theme="dark"] body:has(.admin-layout) .admin-stat-card,
+[data-theme="dark"] body:has(.admin-layout) .admin-filters,
+[data-theme="dark"] body:has(.admin-layout) .admin-table-wrap,
+[data-theme="dark"] body:has(.admin-layout) .evidence-card {
+  background: rgba(25,14,55,0.82) !important;
+  border: 1px solid rgba(167,139,250,0.28) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px rgba(167,139,250,0.10) inset !important;
+}
+
 input, button, textarea, select { font-family: inherit; }
 
 /* ─── Scrollbar ────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 3px; }
+
 
 /* ─── Spinner ──────────────────────────────────────── */
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -147,15 +270,19 @@ input, button, textarea, select { font-family: inherit; }
   display: flex; align-items: center;
   padding: 0 1.25rem; gap: 0.75rem;
   background: var(--bg-nav);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.9);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.9);
   border-bottom: 1px solid var(--glass-border);
+  box-shadow: 0 1px 24px rgba(168,85,247,0.12);
   z-index: 1000;
+  /* rainbow top accent line, like login card */
+  border-top: 2px solid transparent;
+  background-clip: padding-box;
 }
 .nav-logo { display: flex; align-items: center; gap: 0.5rem; text-decoration: none; }
 .nav-logo-icon { font-size: 1.5rem; }
 .nav-logo-text { font-size: 1.2rem; font-weight: 800; color: var(--text); }
-.nav-logo-text span { background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.nav-logo-text span { background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
 .nav-spacer { flex: 1; }
 .nav-pill {
   display: flex; align-items: center; gap: 0.4rem;
@@ -210,8 +337,8 @@ input, button, textarea, select { font-family: inherit; }
   max-height: calc(100vh - var(--nav-h) - 2rem);
   overflow-y: auto;
   background: var(--bg-sidebar);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(30px) saturate(1.9);
+  -webkit-backdrop-filter: blur(30px) saturate(1.9);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-xl);
   box-shadow: var(--shadow-lg);
@@ -421,10 +548,11 @@ select.form-control { appearance: none; cursor: pointer; }
   width: 340px;
   max-height: calc(100vh - var(--nav-h) - 2rem);
   background: var(--bg-sidebar);
-  backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(30px) saturate(1.9);
+  -webkit-backdrop-filter: blur(30px) saturate(1.9);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 32px 80px rgba(130,80,200,0.22), 0 4px 24px rgba(0,0,0,0.10);
   z-index: 500;
   display: flex; flex-direction: column;
   transition: right 0.4s cubic-bezier(.4,0,.2,1);
@@ -461,10 +589,11 @@ select.form-control { appearance: none; cursor: pointer; }
   bottom: 6rem; right: -380px;
   width: 320px;
   background: var(--bg-sidebar);
-  backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(30px) saturate(1.9);
+  -webkit-backdrop-filter: blur(30px) saturate(1.9);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 32px 80px rgba(130,80,200,0.22), 0 4px 24px rgba(0,0,0,0.10);
   z-index: 600;
   padding: 1rem;
   transition: right 0.4s cubic-bezier(.4,0,.2,1);
@@ -643,6 +772,8 @@ select.form-control { appearance: none; cursor: pointer; }
   padding: calc(var(--nav-h) + 1.5rem) 1.5rem 2rem;
   max-width: 1280px;
   margin: 0 auto;
+  position: relative;
+  z-index: 10;
 }
 
 /* ─── Admin Stat Cards ─────────────────────────────── */
@@ -790,7 +921,7 @@ select.form-control { appearance: none; cursor: pointer; }
    ===================================================== */
 @media (max-width: 768px) {
   .sidebar { width: calc(100% - 2rem); left: 1rem; }
-  .sidebar:not(.collapsed) { }
+
   #sidebar-toggle { display: flex !important; }
   .panel { width: calc(100% - 2rem); right: -100%; }
   .panel.open { right: 1rem; }

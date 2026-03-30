@@ -6,8 +6,52 @@
   <title>SafeNet — Admin Dashboard</title>
   <meta name="description" content="SafeNet Admin — manage, verify, and moderate incident reports." />
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Admin page: body gets the gradient as fallback when overlay loads */
+    body {
+      background: linear-gradient(145deg, #f0e8ff 0%, #ede9fe 35%, #e0f2fe 70%, #f5f0ff 100%);
+    }
+    [data-theme="dark"] body {
+      background: linear-gradient(145deg, #0d0818 0%, #120a28 40%, #0a1020 80%, #080615 100%);
+    }
+    /* Rainbow accent line on navbar top edge */
+    .navbar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2.5px;
+      background: linear-gradient(90deg, #f472b6, #a78bfa, #34d399, #fbbf24, #06b6d4);
+      background-size: 200% 100%;
+      animation: rainbowShift 5s linear infinite;
+      border-radius: 0;
+    }
+    @keyframes rainbowShift {
+      0%   { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+    /* Brighter nav buttons */
+    .nav-btn {
+      background: rgba(255,255,255,0.85) !important;
+      border-color: rgba(168,85,247,0.30) !important;
+      box-shadow: 0 2px 8px rgba(168,85,247,0.12);
+    }
+    [data-theme="dark"] .nav-btn {
+      background: rgba(30,15,60,0.85) !important;
+      border-color: rgba(167,139,250,0.30) !important;
+    }
+    .nav-btn:hover {
+      background: rgba(255,255,255,1) !important;
+      border-color: #a855f7 !important;
+      box-shadow: 0 0 16px rgba(168,85,247,0.35) !important;
+    }
+  </style>
 </head>
 <body>
+
+<!-- ─── Background (admin — animated gradient, no image) ─── -->
+<div id="bg-overlay" class="admin-bg"></div>
+<div id="grid-overlay"></div>
+<div id="scan-line"></div>
 
 <!-- ─── Loading ──────────────────────────────────────── -->
 <div class="loading-overlay" id="loading">
@@ -21,7 +65,7 @@
     <div class="nav-logo-icon">🛡️</div>
     <div class="nav-logo-text">Safe<span>Net</span></div>
   </a>
-  <div class="nav-pill" style="background:rgba(108,99,255,0.1);border-color:rgba(108,99,255,0.2);color:var(--primary);">
+  <div class="nav-pill" style="background:rgba(168,85,247,0.18);border-color:rgba(168,85,247,0.40);color:#a855f7;font-weight:800;letter-spacing:0.06em;box-shadow:0 0 12px rgba(168,85,247,0.25);">
     <span>🔧</span> Admin Panel
   </div>
   <div class="nav-spacer"></div>
