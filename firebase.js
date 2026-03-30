@@ -227,3 +227,91 @@ window.SafeNet = {
   deleteReport, verifyReport, unverifyReport, getReportById,
   getAllUsers,
 };
+
+/* ─── SEED DATABASE (Indian realistic data, clean) ─── */
+(function seedIndiaDatabase() {
+  const SEED_VERSION = 'v1.2-women-safety';
+  // Delete pre existing if version doesn't match
+  if (localStorage.getItem('sn-seed-version') !== SEED_VERSION) {
+    localStorage.removeItem(SK.REPORTS);
+    
+    const indiaReports = [
+      // existing 10
+      { type: 'theft', lat: 28.6139, lng: 77.2090, desc: 'Purse snatched by two men on a bike while waiting for auto.', user: 'seed-admin' },
+      { type: 'harassment', lat: 28.5355, lng: 77.2910, desc: 'Group of men catcalling and passing lewd comments at girls passing by.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 19.0760, lng: 72.8777, desc: 'Street lights are broken, makes it extremely unsafe for women to walk back from work.', user: 'seed-admin' },
+      { type: 'theft', lat: 19.1136, lng: 72.8697, desc: 'Phone snatched from a girl\'s hand near the auto stand.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 12.9716, lng: 77.5946, desc: 'Very dark stretch, no active police patrol. Women should avoid walking alone here at night.', user: 'seed-admin' },
+      { type: 'vandalism', lat: 12.9352, lng: 77.6245, desc: 'Street CCTV cameras have been broken, leaving this alley completely unmonitored for women.', user: 'seed-admin' },
+      { type: 'assault', lat: 13.0827, lng: 80.2707, desc: 'A woman was inappropriately touched in the crowded market.', user: 'seed-admin' },
+      { type: 'stalking', lat: 22.5726, lng: 88.3639, desc: 'I was followed by a man for three blocks until I entered a crowded shop.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 17.3850, lng: 78.4867, desc: 'Isolated underpass with no lighting. Feels very unsafe for solo female travelers.', user: 'seed-admin' },
+      { type: 'theft', lat: 18.5204, lng: 73.8567, desc: 'Gold chain snatched from a lady walking home.', user: 'seed-admin' },
+      
+      // clustered points in busy/unsafe zones
+      { type: 'theft', lat: 28.6505, lng: 77.2303, desc: 'Handbag stolen in the crowded market. Warn other female shoppers.', user: 'seed-admin' },
+      { type: 'assault', lat: 28.6692, lng: 77.4538, desc: 'Drunk men harassing women near the dhaba. Very hostile environment.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 28.5562, lng: 77.1000, desc: 'Isolated road; female cab drivers advise not taking this route post 8 PM.', user: 'seed-admin' },
+      { type: 'harassment', lat: 19.0443, lng: 72.8205, desc: 'Frequent eve-teasing by men sitting at the corner tea stall.', user: 'seed-admin' },
+      { type: 'theft', lat: 19.0660, lng: 72.8830, desc: 'Women\'s compartment at the local station had multiple purse pickpocketing incidents today.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 19.0380, lng: 72.8538, desc: 'Path feels very unsafe for young girls returning from tuition.', user: 'seed-admin' },
+      { type: 'theft', lat: 12.9771, lng: 77.5714, desc: 'Backpack slashed and wallet stolen from a college girl in the bus crowd.', user: 'seed-admin' },
+      { type: 'stalking', lat: 12.9141, lng: 77.6308, desc: 'Auto driver kept trailing a girl who was walking alone.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 12.9172, lng: 77.6228, desc: 'No safe crossing for women. Have to endure creeps at the junction for long minutes.', user: 'seed-admin' },
+      { type: 'harassment', lat: 13.0489, lng: 80.2425, desc: 'Verbal abuse and staring making women commuters very uncomfortable at the depot.', user: 'seed-admin' },
+      { type: 'theft', lat: 22.5851, lng: 88.3468, desc: 'Pickpockets continuously targeting women\'s purses at this tourist hotspot.', user: 'seed-admin' },
+      { type: 'stalking', lat: 22.5535, lng: 88.3514, desc: 'Man has been repeatedly following college girls through these alleys.', user: 'seed-admin' },
+
+      // Tier 1 & 2 cities spread
+      { type: 'assault', lat: 26.9124, lng: 75.7873, desc: 'A woman reported groping in the bus stand parking. Police were called.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 26.8467, lng: 80.9462, desc: 'Dark construction site with laborers passing inappropriate comments at women.', user: 'seed-admin' },
+      { type: 'theft', lat: 23.0225, lng: 72.5714, desc: 'Tote bag stolen off a woman\'s two-wheeler parked outside the mall.', user: 'seed-admin' },
+      { type: 'vandalism', lat: 21.1702, lng: 72.8311, desc: 'Women\'s washroom facilities intentionally vandalized and doors broken.', user: 'seed-admin' },
+      { type: 'harassment', lat: 26.4499, lng: 80.3319, desc: 'Boys on bikes eve-teasing female students near the college gates.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 21.1458, lng: 79.0882, desc: 'No safe pedestrian path. Women forced to walk very close to hostile traffic.', user: 'seed-admin' },
+      { type: 'theft', lat: 22.7196, lng: 75.8577, desc: 'Woman\'s cycle stolen from outside the ladies\' coaching center.', user: 'seed-admin' },
+      { type: 'stalking', lat: 23.2599, lng: 77.4126, desc: 'Car slowly trailing solo female pedestrian late at night. Scary experience.', user: 'seed-admin' },
+      { type: 'theft', lat: 25.5941, lng: 85.1376, desc: 'Bikers snatching phones directly from women\'s hands near checking point.', user: 'seed-admin' },
+      { type: 'assault', lat: 22.3072, lng: 73.1812, desc: 'Physical harassment against a female vendor reported inside the crowded market.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 30.9010, lng: 75.8573, desc: 'Street remains deserted post 7 PM, totally unsafe for solo female travel.', user: 'seed-admin' },
+      { type: 'harassment', lat: 27.1767, lng: 78.0081, desc: 'Female tourists facing extremely aggressive and inappropriate touts.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 25.3176, lng: 82.9739, desc: 'Congested ghat path where women frequently report feeling unsafe and groped.', user: 'seed-admin' },
+      { type: 'vandalism', lat: 28.9845, lng: 77.7064, desc: 'Street lights systematically broken creating dark spots dangerous for women.', user: 'seed-admin' },
+      { type: 'theft', lat: 31.6340, lng: 74.8723, desc: 'Valuables stolen from a woman\'s parked car while she went to the pharmacy.', user: 'seed-admin' },
+      { type: 'harassment', lat: 25.4358, lng: 81.8463, desc: 'Drunk groups creating a nuisance and making girls feel extremely unsafe at the river banks.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 23.3441, lng: 85.3096, desc: 'Lack of streetlights makes it terrifying for women working night shifts to commute.', user: 'seed-admin' },
+      { type: 'theft', lat: 26.1445, lng: 91.7362, desc: 'Pickpocketing targeting women carrying hand-purses at the ferry terminal.', user: 'seed-admin' },
+      { type: 'stalking', lat: 30.7333, lng: 76.7794, desc: 'A girl was followed by a white SUV for 2 kilometers. Be very careful here.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 20.2961, lng: 85.8245, desc: 'Isolated area behind the bus stand. Multiple reports of women feeling unsafe.', user: 'seed-admin' },
+      { type: 'vandalism', lat: 30.3165, lng: 78.0322, desc: 'Emergency SOS poles for women deliberately damaged by miscreants.', user: 'seed-admin' },
+      { type: 'assault', lat: 9.9312, lng: 76.2673, desc: 'A woman reported being pushed and harassed outside a local pub late night.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 8.5241, lng: 76.9366, desc: 'Pitch dark walkway near the station. Avoid completely after dusk, ladies.', user: 'seed-admin' },
+      { type: 'theft', lat: 11.0168, lng: 76.9558, desc: 'Gold chain snatched from an elderly lady taking a walk in the park.', user: 'seed-admin' },
+      { type: 'harassment', lat: 9.9252, lng: 78.1198, desc: 'Unwanted advances and inappropriate comments by shopkeeper towards female customers.', user: 'seed-admin' },
+      { type: 'unsafe', lat: 27.8974, lng: 78.0880, desc: 'Highway patch with frequent incidents targeting cars driven by solo women.', user: 'seed-admin' }
+    ];
+
+    const seededData = indiaReports.map((r, i) => {
+      // spread times over the last few hours
+      const pastTime = Date.now() - (i * 3600000 * 2.5); 
+      return {
+        id: 'id_seed_' + i + '_' + Math.random().toString(36).slice(2, 9),
+        lat: r.lat,
+        lng: r.lng,
+        type: r.type,
+        description: r.desc,
+        userId: r.user,
+        createdAt: new Date(pastTime).toISOString(),
+        integrityHash: 'seed-hash-1234',
+        evidenceHash: null,
+        verified: i % 2 === 0, // Half are verified
+        verifiedBy: i % 2 === 0 ? 'admin_seed' : null,
+        verifiedAt: i % 2 === 0 ? new Date(pastTime + 1000).toISOString() : null,
+      };
+    });
+
+    localStorage.setItem(SK.REPORTS, JSON.stringify(seededData));
+    localStorage.setItem('sn-seed-version', SEED_VERSION);
+    console.log("Seeded database with realistic Indian data.");
+  }
+})();
