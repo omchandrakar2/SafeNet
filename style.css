@@ -1,48 +1,48 @@
 /* =====================================================
    SAFENET — Premium Design System
-   Purple/Blue Gradient · Glassmorphism · Dark Mode
+   Umbrella · Lavender · Teal · Mint · Glassmorphism
    ===================================================== */
 
-/* ─── Google Font ──────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* ─── Google Fonts ─────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Orbitron:wght@400;700;900&display=swap');
 
-/* ─── CSS Variables (Light) ────────────────────────── */
+/* ─── CSS Variables (Light — Umbrella Palette) ─────── */
 :root {
-  /* brand */
-  --primary:       #6c63ff;
-  --primary-dark:  #5a52d5;
-  --primary-light: #8b83ff;
-  --accent:        #00d2ff;
-  --gradient:      linear-gradient(135deg, #6c63ff 0%, #00d2ff 100%);
-  --gradient-warm: linear-gradient(135deg, #6c63ff 0%, #e040fb 100%);
+  /* brand — drawn from umbrella purples, teals, mints */
+  --primary:       #a855f7;           /* vivid lavender-purple  */
+  --primary-dark:  #7c3aed;           /* deep violet            */
+  --primary-light: #c084fc;           /* soft lilac             */
+  --accent:        #06b6d4;           /* umbrella teal/cyan     */
+  --gradient:      linear-gradient(135deg, #a855f7 0%, #6366f1 50%, #06b6d4 100%);
+  --gradient-warm: linear-gradient(135deg, #f472b6 0%, #a855f7 50%, #fbbf24 100%);
 
   /* surfaces */
-  --bg:            #f0f2f5;
+  --bg:            #f5f0ff;           /* faint lavender wash    */
   --bg-card:       rgba(255,255,255,0.72);
   --bg-modal:      rgba(255,255,255,0.92);
-  --bg-sidebar:    rgba(255,255,255,0.78);
-  --bg-nav:        rgba(255,255,255,0.82);
+  --bg-sidebar:    rgba(250,246,255,0.82);
+  --bg-nav:        rgba(255,255,255,0.85);
 
   /* glass */
-  --glass-blur:    16px;
-  --glass-border:  rgba(108,99,255,0.12);
-  --glass-border2: rgba(0,0,0,0.06);
+  --glass-blur:    18px;
+  --glass-border:  rgba(168,85,247,0.15);
+  --glass-border2: rgba(168,85,247,0.06);
 
   /* text */
-  --text:          #1a1a2e;
-  --text-2:        #4a4a6a;
-  --text-3:        #8888a8;
+  --text:          #1e1240;           /* deep indigo            */
+  --text-2:        #4c3d85;           /* mid-purple             */
+  --text-3:        #9d8ec4;           /* soft muted lavender    */
 
   /* risk */
-  --risk-low:      #10b981;
-  --risk-med:      #f59e0b;
-  --risk-high:     #ef4444;
+  --risk-low:      #34d399;           /* mint green             */
+  --risk-med:      #fbbf24;           /* umbrella golden yellow */
+  --risk-high:     #f43f5e;           /* coral-red              */
 
   /* status */
-  --success:       #10b981;
-  --warning:       #f59e0b;
-  --danger:        #ef4444;
-  --info:          #3b82f6;
+  --success:       #34d399;
+  --warning:       #fbbf24;
+  --danger:        #f43f5e;
+  --info:          #6366f1;
 
   /* radii */
   --r-sm:  8px;
@@ -51,32 +51,43 @@
   --r-xl:  20px;
   --r-full:9999px;
 
-  /* shadows */
-  --shadow-sm:  0 1px 3px rgba(0,0,0,0.05);
-  --shadow-md:  0 4px 16px rgba(0,0,0,0.08);
-  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
-  --shadow-glow:0 0 30px rgba(108,99,255,0.15);
+  /* shadows — tinted purple */
+  --shadow-sm:  0 1px 4px rgba(168,85,247,0.07);
+  --shadow-md:  0 4px 18px rgba(168,85,247,0.10);
+  --shadow-lg:  0 8px 36px rgba(168,85,247,0.15);
+  --shadow-glow:0 0 32px rgba(168,85,247,0.22);
 
   /* nav */
   --nav-h: 60px;
 }
 
-/* ─── Dark Mode ────────────────────────────────────── */
+/* ─── Dark Mode (Umbrella at Night) ────────────────── */
 [data-theme="dark"] {
-  --bg:           #0f0f1a;
-  --bg-card:      rgba(30,30,50,0.72);
-  --bg-modal:     rgba(25,25,45,0.95);
-  --bg-sidebar:   rgba(20,20,40,0.85);
-  --bg-nav:       rgba(18,18,35,0.88);
-  --glass-border: rgba(108,99,255,0.18);
+  --bg:           #0d0818;            /* deep night indigo      */
+  --bg-card:      rgba(22,14,45,0.78);
+  --bg-modal:     rgba(18,10,38,0.95);
+  --bg-sidebar:   rgba(18,12,40,0.88);
+  --bg-nav:       rgba(14,8,32,0.90);
+  --glass-border: rgba(192,132,252,0.20);
   --glass-border2:rgba(255,255,255,0.06);
-  --text:         #e8e8f0;
-  --text-2:       #b0b0cc;
-  --text-3:       #6e6e8c;
-  --shadow-sm:    0 1px 3px rgba(0,0,0,0.2);
-  --shadow-md:    0 4px 16px rgba(0,0,0,0.3);
-  --shadow-lg:    0 8px 32px rgba(0,0,0,0.4);
-  --shadow-glow:  0 0 30px rgba(108,99,255,0.25);
+  --text:         #f0e8ff;            /* soft white-lavender    */
+  --text-2:       #c4b5fd;            /* lavender mid           */
+  --text-3:       #7c6fa0;            /* dim purple             */
+  --shadow-sm:    0 1px 4px rgba(0,0,0,0.3);
+  --shadow-md:    0 4px 18px rgba(0,0,0,0.4);
+  --shadow-lg:    0 8px 36px rgba(0,0,0,0.55);
+  --shadow-glow:  0 0 32px rgba(192,132,252,0.30);
+  /* keep brand vars consistent in dark */
+  --primary:       #c084fc;
+  --primary-dark:  #a855f7;
+  --primary-light: #ddd6fe;
+  --accent:        #22d3ee;
+  --gradient:      linear-gradient(135deg, #c084fc 0%, #818cf8 50%, #34d399 100%);
+  --gradient-warm: linear-gradient(135deg, #f472b6 0%, #c084fc 50%, #fbbf24 100%);
+  --success:       #34d399;
+  --warning:       #fbbf24;
+  --danger:        #fb7185;
+  --info:          #818cf8;
 }
 
 /* ─── Reset ────────────────────────────────────────── */
