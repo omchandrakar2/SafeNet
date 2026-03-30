@@ -1,145 +1,350 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SafetyNet — Report a Complaint</title>
   <meta name="description" content="File a new safety complaint including location, category, and description." />
   <link rel="stylesheet" href="../css/styles.css" />
+  <style>
+    /* Floating label inputs */
+    .float-field {
+      position: relative;
+      margin-bottom: 1.4rem;
+    }
+    .float-field .form-control {
+      padding-top: 1.4rem;
+      padding-bottom: 0.45rem;
+    }
+    .float-field textarea.form-control {
+      padding-top: 1.6rem;
+    }
+    .float-label {
+      position: absolute;
+      left: 1rem;
+      top: 0.75rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: all 0.2s ease;
+      font-weight: 400;
+    }
+    .float-field .form-control:focus + .float-label,
+    .float-field .form-control:not(:placeholder-shown) + .float-label {
+      top: 0.35rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--accent-purple);
+    }
+    /* Validation icons */
+    .field-wrap { position: relative; }
+    .field-wrap .val-icon {
+      position: absolute;
+      right: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.95rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .field-wrap .form-control.valid   + .val-icon { opacity: 1; color: var(--accent-green); }
+    .field-wrap .form-control.invalid + .val-icon { opacity: 1; color: var(--accent-red); }
+
+    /* Category cards */
+    .cat-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .cat-card {
+      border: 2px solid transparent;
+      border-radius: var(--radius-md);
+      padding: 1rem 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-med);
+      background: rgba(107,114,128,0.05);
+    }
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+    .cat-card.selected { border-color: var(--accent-purple); background: rgba(108,99,255,0.08); }
+    .cat-card .cat-emoji { font-size: 2rem; display: block; margin-bottom: 0.4rem; }
+    .cat-card .cat-name { font-size: 0.78rem; font-weight: 700; color: var(--text-primary); }
+    .cat-card .cat-desc { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+    /* Impact preview */
+    .impact-box {
+      display: none;
+      border-radius: var(--radius-md);
+      padding: 1rem 1.1rem;
+      background: rgba(108,99,255,0.06);
+      border: 1.5px solid rgba(108,99,255,0.18);
+      margin-bottom: 1.25rem;
+      animation: fadeSlideUp 0.3s ease;
+    }
+    .impact-box .impact-title { font-size:0.78rem; font-weight:700; color:var(--accent-purple); margin-bottom:0.3rem; }
+
+    /* Map mini preview */
+    .map-mini {
+      height: 160px;
+      background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(108,99,255,0.06) 100%);
+      border-radius: var(--radius-md);
+      border: 1.5px dashed rgba(108,99,255,0.20);
+      display: flex; align-items: center; justify-content: center;
+      margin-top: 1rem;
+      flex-direction: column;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      transition: all var(--transition-med);
+    }
+    .map-mini.has-coords {
+      border-color: var(--accent-teal);
+      background: linear-gradient(135deg, rgba(20,184,166,0.07) 0%, rgba(56,189,248,0.05) 100%);
+      color: var(--accent-teal);
+    }
+
+    /* Lifecycle stepper */
+    .lifecycle-steps { display: flex; flex-direction: column; gap: 0.6rem; }
+    .lc-step {
+      display: flex; align-items: center; gap: 0.9rem;
+      padding: 0.65rem 0.9rem;
+      border-radius: var(--radius-md);
+      background: rgba(107,114,128,0.04);
+      border: 1.5px solid rgba(107,114,128,0.08);
+      opacity: 0.45;
+      transition: all 0.4s ease;
+    }
+    .lc-step.active {
+      opacity: 1;
+      background: rgba(108,99,255,0.05);
+      border-color: rgba(108,99,255,0.20);
+    }
+    .lc-step-icon { font-size: 1.2rem; width: 32px; flex-shrink: 0; text-align:center; }
+    .lc-step-label { flex: 1; font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
+
+    /* Step nav buttons */
+    .step-nav { display: flex; gap: 0.75rem; margin-top: 2rem; align-items: center; }
+
+    /* Submit glow */
+    .btn-submit-glow {
+      background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+      color: #fff;
+      box-shadow: 0 6px 24px rgba(108,99,255,0.50), 0 0 0 0 rgba(108,99,255,0.3);
+      animation: submitPulse 2.5s ease-in-out infinite;
+    }
+    .btn-submit-glow:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 10px 32px rgba(108,99,255,0.60);
+    }
+    @keyframes submitPulse {
+      0%, 100% { box-shadow: 0 6px 24px rgba(108,99,255,0.45), 0 0 0 0 rgba(108,99,255,0.2); }
+      50%       { box-shadow: 0 6px 24px rgba(108,99,255,0.45), 0 0 0 8px rgba(108,99,255,0); }
+    }
+    @media (max-width: 600px) { .cat-grid { grid-template-columns: 1fr 1fr; } }
+  </style>
 </head>
 <body>
 
-<!-- ─── Navigation ──────────────────────────────────────────────────── -->
 <nav class="navbar">
   <a href="../index.html" class="logo">
     <div class="logo-icon">🛡️</div>
     <span class="brand-text">Safety<span class="brand-accent">Net</span></span>
   </a>
   <div class="nav-links">
-    <a href="../index.html"          class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
-    <a href="report.html"            class="nav-link"><span class="nav-icon">📝</span> Report</a>
-    <a href="map.html"               class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
-    <a href="evidence.html"          class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
+    <a href="../index.html"         class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="report.html"           class="nav-link"><span class="nav-icon">📝</span> Report</a>
+    <a href="map.html"              class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
+    <a href="evidence.html"         class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
   </div>
   <div class="nav-badge">
     <span class="badge-pill">● MCP Live</span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
   </div>
 </nav>
 
 <div class="page-wrapper">
-  <div class="container" style="max-width: 760px;">
+  <div class="container" style="max-width: 720px;">
 
     <!-- Header -->
     <div class="page-header fade-up">
-      <div class="eyebrow">MCP · addComplaint()</div>
+      <div class="eyebrow">📝 MCP · addComplaint()</div>
       <h1>Report a <span class="gradient-text">Safety Incident</span></h1>
       <p>Your report is hashed, timestamped, and stored securely. Location data drives the safety score engine.</p>
     </div>
 
-    <!-- Form Card -->
-    <div class="card fade-up fade-up-1">
-      <form id="complaint-form" novalidate>
-
-        <!-- Title -->
-        <div class="form-group">
-          <label class="form-label" for="inp-title">Incident Title *</label>
-          <input type="text" id="inp-title" class="form-control"
-                 placeholder="Brief description of the incident" maxlength="120" required />
-          <div class="field-hint" style="font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem" id="title-count">0 / 120</div>
-        </div>
-
-        <!-- Category -->
-        <div class="form-group">
-          <label class="form-label" for="inp-category">Incident Category *</label>
-          <select id="inp-category" class="form-control" required>
-            <option value="" disabled selected>— Select a category —</option>
-            <option value="harassment">😡 Harassment</option>
-            <option value="theft">🔓 Theft</option>
-            <option value="accident">🚗 Accident</option>
-          </select>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-          <label class="form-label" for="inp-desc">Description *</label>
-          <textarea id="inp-desc" class="form-control" rows="4"
-                    placeholder="Describe what happened in detail…" required></textarea>
-        </div>
-
-        <hr class="divider" />
-
-        <!-- Location -->
-        <div style="margin-bottom:0.75rem;">
-          <div class="section-title" style="margin-bottom:0.25rem">📍 Location</div>
-          <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem">
-            Enter the location manually or
-            <button type="button" id="geo-btn" class="btn btn-ghost btn-sm">📡 Use My Location</button>
-          </p>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label" for="inp-location">Location Name *</label>
-          <input type="text" id="inp-location" class="form-control"
-                 placeholder="e.g. Koramangala Metro Station" required />
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label" for="inp-lat">Latitude</label>
-            <input type="number" id="inp-lat" class="form-control" placeholder="12.9716" step="any" />
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="inp-lng">Longitude</label>
-            <input type="number" id="inp-lng" class="form-control" placeholder="77.5946" step="any" />
-          </div>
-        </div>
-
-        <!-- Category Impact Preview -->
-        <div id="impact-preview" style="display:none;margin-bottom:1.25rem;">
-          <div class="card" style="padding:1rem;background:rgba(108,99,255,0.07);border-color:rgba(108,99,255,0.2);">
-            <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;color:var(--accent-purple)">⚡ Safety Score Impact</div>
-            <div style="font-size:0.85rem;color:var(--text-secondary)" id="impact-text"></div>
-          </div>
-        </div>
-
-        <hr class="divider" />
-
-        <!-- Submit -->
-        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
-          <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
-            📝 Submit Complaint
-          </button>
-          <button type="button" class="btn btn-ghost" onclick="resetForm()">Reset</button>
-          <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:center;font-size:0.8rem;color:var(--text-muted)">
-            🔐 Stored securely via MCP
-          </div>
-        </div>
-      </form>
+    <!-- Wizard Step Indicators -->
+    <div class="fade-up fade-up-1" style="display:flex;align-items:center;margin-bottom:2.5rem;gap:0;">
+      <div class="wizard-step active" id="ws-1">
+        <div class="wizard-step-circle">1</div>
+        <div class="wizard-step-label">Incident</div>
+      </div>
+      <div class="wizard-line" id="wl-1"></div>
+      <div class="wizard-step" id="ws-2">
+        <div class="wizard-step-circle">2</div>
+        <div class="wizard-step-label">Location</div>
+      </div>
+      <div class="wizard-line" id="wl-2"></div>
+      <div class="wizard-step" id="ws-3">
+        <div class="wizard-step-circle">3</div>
+        <div class="wizard-step-label">Review</div>
+      </div>
     </div>
 
-    <!-- MCP Lifecycle Note -->
-    <div class="card fade-up fade-up-2" style="margin-top:1.5rem;padding:1.2rem;">
-      <div class="section-title" style="margin-bottom:0.75rem">⚡ MCP Event Lifecycle</div>
-      <div style="display:flex;flex-direction:column;gap:0.5rem;">
-        <div class="lifecycle-step" id="lc-1" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
-          <span style="font-size:1rem">1️⃣</span>
-          <div style="flex:1;font-size:0.8rem"><strong>addComplaint()</strong> called — context updated</div>
-          <span class="chip chip-gray">Waiting</span>
+    <!-- ─── Step 1: Incident Details ─── -->
+    <div class="wizard-panel active fade-up fade-up-2" id="panel-1">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1.5rem">🏷️ Incident Details</div>
+
+        <!-- Title (floating label) -->
+        <div class="float-field">
+          <div class="field-wrap">
+            <input type="text" id="inp-title" class="form-control" placeholder=" " maxlength="120" />
+            <label class="float-label" for="inp-title">Incident Title *</label>
+            <span class="val-icon">✓</span>
+          </div>
+          <div class="field-hint" id="title-count">0 / 120 characters</div>
         </div>
-        <div class="lifecycle-step" id="lc-2" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
-          <span style="font-size:1rem">2️⃣</span>
-          <div style="flex:1;font-size:0.8rem"><strong>updateSafetyScore()</strong> — score engine runs</div>
-          <span class="chip chip-gray">Waiting</span>
+
+        <!-- Categories -->
+        <div style="margin-bottom:1.25rem">
+          <div class="form-label" style="margin-bottom:0.6rem">Incident Category *</div>
+          <div class="cat-grid" id="cat-grid">
+            <div class="cat-card" data-value="harassment" onclick="selectCategory('harassment')">
+              <span class="cat-emoji">😡</span>
+              <div class="cat-name">Harassment</div>
+              <div class="cat-desc">−2 pts score</div>
+            </div>
+            <div class="cat-card" data-value="theft" onclick="selectCategory('theft')">
+              <span class="cat-emoji">🔓</span>
+              <div class="cat-name">Theft</div>
+              <div class="cat-desc">−1.5 pts score</div>
+            </div>
+            <div class="cat-card" data-value="accident" onclick="selectCategory('accident')">
+              <span class="cat-emoji">🚗</span>
+              <div class="cat-name">Accident</div>
+              <div class="cat-desc">−1 pt score</div>
+            </div>
+          </div>
+          <input type="hidden" id="inp-category" />
+          <div class="impact-box" id="impact-preview">
+            <div class="impact-title">⚡ Safety Score Impact</div>
+            <div id="impact-text"></div>
+          </div>
         </div>
-        <div class="lifecycle-step" id="lc-3" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
-          <span style="font-size:1rem">3️⃣</span>
-          <div style="flex:1;font-size:0.8rem"><strong>saveToStorage()</strong> — localStorage synced</div>
-          <span class="chip chip-gray">Waiting</span>
+
+        <!-- Description (floating label) -->
+        <div class="float-field">
+          <div class="field-wrap">
+            <textarea id="inp-desc" class="form-control" placeholder=" " rows="4"></textarea>
+            <label class="float-label" for="inp-desc">Describe what happened in detail… *</label>
+          </div>
         </div>
-        <div class="lifecycle-step" id="lc-4" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
-          <span style="font-size:1rem">4️⃣</span>
-          <div style="flex:1;font-size:0.8rem"><strong>MCP Event</strong> emitted → Dashboard auto-updates</div>
-          <span class="chip chip-gray">Waiting</span>
+
+        <div class="step-nav">
+          <button class="btn btn-primary btn-lg" onclick="goToStep(2)">Next: Location →</button>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Step 1 of 3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Step 2: Location ─── -->
+    <div class="wizard-panel" id="panel-2">
+      <div class="card">
+        <div class="section-title" style="margin-bottom:1.5rem">📍 Location Details</div>
+
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+          <p style="font-size:0.85rem;color:var(--text-secondary)">Enter manually or use GPS:</p>
+          <button type="button" id="geo-btn" class="btn btn-ghost btn-sm">📡 Use My Location</button>
+        </div>
+
+        <!-- Location name (floating) -->
+        <div class="float-field">
+          <div class="field-wrap">
+            <input type="text" id="inp-location" class="form-control" placeholder=" " />
+            <label class="float-label" for="inp-location">Location Name *</label>
+            <span class="val-icon">✓</span>
+          </div>
+        </div>
+
+        <!-- Lat / Lng -->
+        <div class="form-row">
+          <div class="float-field">
+            <div class="field-wrap">
+              <input type="number" id="inp-lat" class="form-control" placeholder=" " step="any" />
+              <label class="float-label" for="inp-lat">Latitude</label>
+            </div>
+          </div>
+          <div class="float-field">
+            <div class="field-wrap">
+              <input type="number" id="inp-lng" class="form-control" placeholder=" " step="any" />
+              <label class="float-label" for="inp-lng">Longitude</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Map mini-preview -->
+        <div class="map-mini" id="map-mini">
+          <span style="font-size:2rem">🗺️</span>
+          <span>Enter coordinates to preview location</span>
+        </div>
+
+        <div class="step-nav">
+          <button class="btn btn-ghost" onclick="goToStep(1)">← Back</button>
+          <button class="btn btn-primary btn-lg" onclick="goToStep(3)">Next: Review →</button>
+          <span style="font-size:0.8rem;color:var(--text-muted)">Step 2 of 3</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Step 3: Review & Submit ─── -->
+    <div class="wizard-panel" id="panel-3">
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div class="section-title" style="margin-bottom:1.25rem">📋 Review &amp; Submit</div>
+
+        <div id="review-summary" style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem;">
+          <!-- populated by JS -->
+        </div>
+
+        <hr class="divider" />
+
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <button type="button" class="btn btn-submit-glow btn-lg" id="submit-btn" onclick="handleSubmit()">
+            🚀 Submit Report
+          </button>
+          <button type="button" class="btn btn-ghost" onclick="goToStep(2)">← Edit</button>
+          <button type="button" class="btn btn-ghost" onclick="resetForm()" style="margin-left:auto;">Reset</button>
+        </div>
+        <div style="margin-top:0.75rem;font-size:0.78rem;color:var(--text-muted)">🔐 Stored securely via MCP · Hashed &amp; timestamped</div>
+      </div>
+
+      <!-- MCP Lifecycle -->
+      <div class="card" style="padding:1.3rem;">
+        <div class="section-title" style="margin-bottom:1rem">⚡ MCP Event Lifecycle</div>
+        <div class="lifecycle-steps">
+          <div class="lc-step" id="lc-1">
+            <div class="lc-step-icon">1️⃣</div>
+            <div class="lc-step-label"><strong>addComplaint()</strong> — context updated</div>
+            <span class="chip chip-gray" id="lc-chip-1">Waiting</span>
+          </div>
+          <div class="lc-step" id="lc-2">
+            <div class="lc-step-icon">2️⃣</div>
+            <div class="lc-step-label"><strong>updateSafetyScore()</strong> — score engine runs</div>
+            <span class="chip chip-gray" id="lc-chip-2">Waiting</span>
+          </div>
+          <div class="lc-step" id="lc-3">
+            <div class="lc-step-icon">3️⃣</div>
+            <div class="lc-step-label"><strong>saveToStorage()</strong> — localStorage synced</div>
+            <span class="chip chip-gray" id="lc-chip-3">Waiting</span>
+          </div>
+          <div class="lc-step" id="lc-4">
+            <div class="lc-step-icon">4️⃣</div>
+            <div class="lc-step-label"><strong>MCP Event</strong> emitted → Dashboard auto-updates</div>
+            <span class="chip chip-gray" id="lc-chip-4">Waiting</span>
+          </div>
         </div>
       </div>
     </div>
@@ -154,120 +359,196 @@
 <script src="../js/mcp-functions.js"></script>
 <script src="../js/utils.js"></script>
 <script>
-// ─── Form Logic ───────────────────────────────────────────────────────────────
+// ─── Theme Toggle ─────────────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeBtn = document.getElementById('theme-toggle');
+function applyTheme(t) { html.setAttribute('data-theme', t); themeBtn.textContent = t === 'dark' ? '☀️' : '🌙'; localStorage.setItem('sn-theme', t); }
+themeBtn.addEventListener('click', () => applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+(function() { const s = localStorage.getItem('sn-theme'); applyTheme(s || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light')); })();
 
-const form    = document.getElementById('complaint-form');
-const titleEl = document.getElementById('inp-title');
-const catEl   = document.getElementById('inp-category');
+// ─── Wizard State ─────────────────────────────────────────────────────────────
+let currentStep = 1;
+let selectedCategory = '';
 
-// Character count
-titleEl.addEventListener('input', () => {
-  document.getElementById('title-count').textContent = titleEl.value.length + ' / 120';
-});
+function goToStep(step) {
+  // Validation
+  if (step > 1) {
+    const title = document.getElementById('inp-title').value.trim();
+    if (!title || !selectedCategory) {
+      showToast('Please fill in the title and select a category.', 'error');
+      return;
+    }
+    const desc = document.getElementById('inp-desc').value.trim();
+    if (!desc) { showToast('Please add a description.', 'error'); return; }
+  }
+  if (step > 2) {
+    const loc = document.getElementById('inp-location').value.trim();
+    if (!loc) { showToast('Please enter a location name.', 'error'); return; }
+    buildReviewSummary();
+  }
 
-// Category impact preview
-catEl.addEventListener('change', () => {
+  currentStep = step;
+  document.querySelectorAll('.wizard-panel').forEach((p, i) => {
+    p.classList.toggle('active', i + 1 === step);
+  });
+  for (let i = 1; i <= 3; i++) {
+    const ws = document.getElementById('ws-' + i);
+    ws.classList.toggle('active', i === step);
+    ws.classList.toggle('done',   i < step);
+  }
+  for (let i = 1; i <= 2; i++) {
+    const wl = document.getElementById('wl-' + i);
+    wl.classList.toggle('done',   i < step);
+    wl.classList.toggle('active', i === step - 1);
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─── Category Selection ───────────────────────────────────────────────────────
+function selectCategory(val) {
+  selectedCategory = val;
+  document.getElementById('inp-category').value = val;
+  document.querySelectorAll('.cat-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.value === val);
+  });
   const impacts = {
     harassment: '😡 Harassment reduces safety score by <strong>−2 points</strong> per report.',
     theft:      '🔓 Theft reduces safety score by <strong>−1.5 points</strong> per report.',
     accident:   '🚗 Accident reduces safety score by <strong>−1 point</strong> per report.',
   };
-  const preview = document.getElementById('impact-preview');
-  const text    = document.getElementById('impact-text');
-  if (catEl.value) {
-    preview.style.display = 'block';
-    text.innerHTML = impacts[catEl.value] || '';
+  const box = document.getElementById('impact-preview');
+  box.style.display = 'block';
+  document.getElementById('impact-text').innerHTML = impacts[val] || '';
+}
+
+// ─── Floating Label validation ────────────────────────────────────────────────
+document.getElementById('inp-title').addEventListener('input', function() {
+  document.getElementById('title-count').textContent = this.value.length + ' / 120 characters';
+  this.classList.toggle('valid',   this.value.trim().length >= 3);
+  this.classList.toggle('invalid', this.value.trim().length > 0 && this.value.trim().length < 3);
+});
+
+// ─── Geolocation ──────────────────────────────────────────────────────────────
+document.getElementById('geo-btn').addEventListener('click', function() {
+  this.innerHTML = '<span class="spinner"></span> Locating…';
+  this.disabled = true;
+  navigator.geolocation.getCurrentPosition(pos => {
+    document.getElementById('inp-lat').value = pos.coords.latitude.toFixed(6);
+    document.getElementById('inp-lng').value = pos.coords.longitude.toFixed(6);
+    this.innerHTML = '✅ Location Set';
+    this.disabled = false;
+    updateMapMini();
+    showToast('GPS coordinates captured!', 'success');
+  }, () => {
+    this.innerHTML = '📡 Use My Location';
+    this.disabled = false;
+    showToast('Could not get location. Enter manually.', 'error');
+  });
+});
+
+['inp-lat','inp-lng'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateMapMini);
+});
+
+function updateMapMini() {
+  const lat = parseFloat(document.getElementById('inp-lat').value);
+  const lng = parseFloat(document.getElementById('inp-lng').value);
+  const mini = document.getElementById('map-mini');
+  if (!isNaN(lat) && !isNaN(lng)) {
+    mini.classList.add('has-coords');
+    mini.innerHTML = `<span style="font-size:2rem">📍</span><strong>${lat.toFixed(4)}, ${lng.toFixed(4)}</strong><span style="font-size:0.75rem">Coordinates captured</span>`;
   } else {
-    preview.style.display = 'none';
+    mini.classList.remove('has-coords');
+    mini.innerHTML = `<span style="font-size:2rem">🗺️</span><span>Enter coordinates to preview location</span>`;
   }
-});
+}
 
-// Geolocation
-document.getElementById('geo-btn').addEventListener('click', () => {
-  const btn = document.getElementById('geo-btn');
-  btn.innerHTML = '<span class="spinner"></span> Locating…';
-  btn.disabled = true;
-  navigator.geolocation.getCurrentPosition(
-    pos => {
-      document.getElementById('inp-lat').value = pos.coords.latitude.toFixed(6);
-      document.getElementById('inp-lng').value = pos.coords.longitude.toFixed(6);
-      btn.innerHTML = '✅ Location Set';
-      btn.disabled = false;
-      showToast('GPS coordinates captured!', 'success');
-    },
-    err => {
-      btn.innerHTML = '📡 Use My Location';
-      btn.disabled = false;
-      showToast('Could not get location. Enter manually.', 'error');
-    }
-  );
-});
+// ─── Review Summary ───────────────────────────────────────────────────────────
+function buildReviewSummary() {
+  const el = document.getElementById('review-summary');
+  const catEmoji = { harassment:'😡', theft:'🔓', accident:'🚗' }[selectedCategory] || '📋';
+  const rows = [
+    ['Title',    document.getElementById('inp-title').value.trim()],
+    ['Category', catEmoji + ' ' + selectedCategory],
+    ['Location', document.getElementById('inp-location').value.trim()],
+    ['Coords',   (() => { const la = document.getElementById('inp-lat').value; const lo = document.getElementById('inp-lng').value; return la && lo ? `${la}, ${lo}` : 'Not specified'; })()],
+    ['Description', document.getElementById('inp-desc').value.trim()],
+  ];
+  el.innerHTML = rows.map(([k, v]) => `
+    <div style="display:flex;gap:1rem;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid rgba(107,114,128,0.10)">
+      <div style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);width:90px;flex-shrink:0;padding-top:0.1rem">${k}</div>
+      <div style="font-size:0.875rem;color:var(--text-primary);font-weight:500;flex:1">${escHtml(v)}</div>
+    </div>
+  `).join('');
+}
 
-// Form submit
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const title    = titleEl.value.trim();
-  const category = catEl.value;
+// ─── Submit ───────────────────────────────────────────────────────────────────
+async function handleSubmit() {
+  const title    = document.getElementById('inp-title').value.trim();
+  const category = selectedCategory;
   const desc     = document.getElementById('inp-desc').value.trim();
   const locName  = document.getElementById('inp-location').value.trim();
   const lat      = parseFloat(document.getElementById('inp-lat').value) || 0;
   const lng      = parseFloat(document.getElementById('inp-lng').value) || 0;
 
   if (!title || !category || !desc || !locName) {
-    showToast('Please fill in all required fields.', 'error');
-    return;
+    showToast('Please fill in all required fields.', 'error'); return;
   }
 
   const btn = document.getElementById('submit-btn');
   btn.innerHTML = '<span class="spinner"></span> Submitting…';
   btn.disabled = true;
 
-  // Simulate MCP lifecycle animation
   await animateMCPLifecycle();
 
-  const complaint = addComplaint({
-    title, category, description: desc,
-    location: { name: locName, lat, lng }
-  });
+  addComplaint({ title, category, description: desc, location: { name: locName, lat, lng } });
 
-  btn.innerHTML = '📝 Submit Complaint';
+  btn.innerHTML = '🚀 Submit Report';
   btn.disabled = false;
-
   showToast(`Complaint "${title}" filed successfully!`, 'success');
-  document.getElementById('lc-4').children[2].className = 'chip chip-green';
-  document.getElementById('lc-4').children[2].textContent = '✓ Done';
-
   setTimeout(() => { window.location.href = '../index.html'; }, 1800);
-});
+}
 
 async function animateMCPLifecycle() {
   const steps = [
-    { id: 'lc-1', label: '✓ Added',    chip: 'chip-purple', delay: 0 },
-    { id: 'lc-2', label: '✓ Scored',   chip: 'chip-yellow', delay: 400 },
-    { id: 'lc-3', label: '✓ Saved',    chip: 'chip-green',  delay: 800 },
-    { id: 'lc-4', label: '✓ Emitted',  chip: 'chip-cyan',   delay: 1200 },
+    { id:'lc-1', chip:'lc-chip-1', label:'✓ Added',   cls:'chip-purple', delay:0 },
+    { id:'lc-2', chip:'lc-chip-2', label:'✓ Scored',  cls:'chip-yellow', delay:450 },
+    { id:'lc-3', chip:'lc-chip-3', label:'✓ Saved',   cls:'chip-green',  delay:900 },
+    { id:'lc-4', chip:'lc-chip-4', label:'✓ Emitted', cls:'chip-cyan',   delay:1350 },
   ];
   for (const s of steps) {
     await new Promise(r => setTimeout(r, s.delay));
-    const el = document.getElementById(s.id);
-    el.style.opacity = '1';
-    el.children[2].className = `chip ${s.chip}`;
-    el.children[2].textContent = s.label;
+    document.getElementById(s.id).classList.add('active');
+    const chip = document.getElementById(s.chip);
+    chip.className = `chip ${s.cls}`;
+    chip.textContent = s.label;
   }
   await new Promise(r => setTimeout(r, 400));
 }
 
 function resetForm() {
-  form.reset();
+  document.getElementById('inp-title').value = '';
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-location').value = '';
+  document.getElementById('inp-lat').value = '';
+  document.getElementById('inp-lng').value = '';
+  document.getElementById('title-count').textContent = '0 / 120 characters';
   document.getElementById('impact-preview').style.display = 'none';
-  document.getElementById('title-count').textContent = '0 / 120';
+  selectedCategory = '';
+  document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('selected'));
   ['lc-1','lc-2','lc-3','lc-4'].forEach(id => {
-    const el = document.getElementById(id);
-    el.style.opacity = '0.4';
-    el.children[2].className = 'chip chip-gray';
-    el.children[2].textContent = 'Waiting';
+    document.getElementById(id).classList.remove('active');
   });
+  ['lc-chip-1','lc-chip-2','lc-chip-3','lc-chip-4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.className = 'chip chip-gray';
+    el.textContent = 'Waiting';
+  });
+  goToStep(1);
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 document.addEventListener('DOMContentLoaded', () => initNav && initNav());
