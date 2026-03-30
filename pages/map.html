@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyNet — Safety Map</title>
+  <meta name="description" content="Interactive map showing color-coded safety scores for reported locations." />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <!-- Leaflet.js — open source, no API key needed -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    #safety-map { height: 500px; }
+    /* Dark Leaflet tiles via CartoDB Dark Matter */
+    .leaflet-tile-pane { filter: brightness(0.85) saturate(1.1); }
+    .custom-popup .leaflet-popup-content-wrapper {
+      background: #1a1c2a; border: 1px solid rgba(108,99,255,0.3);
+      border-radius: 12px; color: #f0f2ff; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .custom-popup .leaflet-popup-tip { background: #1a1c2a; }
+    .custom-popup .leaflet-popup-content { margin: 10px 14px; font-size: 0.85rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../index.html" class="logo">
+    <div class="logo-icon">🛡️</div>
+    <span class="brand-text">Safety<span class="brand-accent">Net</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="../index.html"         class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="report.html"           class="nav-link"><span class="nav-icon">📝</span> Report</a>
+    <a href="map.html"              class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
+    <a href="evidence.html"         class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
+  </div>
+  <div class="nav-badge"><span class="badge-pill">● MCP Live</span></div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="page-header fade-up">
+      <div class="eyebrow">MCP · getSafetyScores()</div>
+      <h1>Safety <span class="gradient-text">Heat Map</span></h1>
+      <p>Color-coded location markers based on live safety scores calculated by the MCP score engine.</p>
+    </div>
+
+    <!-- Legend + Stats Bar -->
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.25rem;" class="fade-up fade-up-1">
+      <div class="card" style="padding:0.7rem 1.1rem;display:flex;gap:1.25rem;align-items:center;flex:1;min-width:280px;">
+        <span style="font-size:0.78rem;color:var(--text-secondary);font-weight:600;letter-spacing:0.5px">LEGEND</span>
+        <span style="display:flex;align-items:center;gap:0.3rem;font-size:0.78rem">🟢 Safe (7–10)</span>
+        <span style="display:flex;align-items:center;gap:0.3rem;font-size:0.78rem">🟡 Medium (4–6)</span>
+        <span style="display:flex;align-items:center;gap:0.3rem;font-size:0.78rem">🔴 High Risk (0–3)</span>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-shrink:0">
+        <div class="card" style="padding:0.6rem 1rem;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800" id="map-total-locations">0</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">Locations</div>
+        </div>
+        <div class="card" style="padding:0.6rem 1rem;text-align:center">
+          <div style="font-size:1.4rem;font-weight:800" id="map-avg-score">--</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">Avg Score</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="card fade-up fade-up-2" style="padding:0;">
+      <div id="safety-map"></div>
+    </div>
+
+    <!-- Location Cards Grid -->
+    <div style="margin-top:1.5rem;">
+      <div class="section-title">📍 All Scored Locations <span class="title-count" id="loc-count">0</span></div>
+      <div class="three-col" id="location-cards">
+        <div class="card" style="grid-column:1/-1">
+          <div class="empty-state">
+            <div class="empty-icon">🗺️</div>
+            <p>No scored locations yet. <a href="report.html" style="color:var(--accent-purple)">Report an incident →</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/mcp-context.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/mcp-functions.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let map;
+
+function initMap() {
+  // Default: center of India
+  map = L.map('safety-map', {
+    center: [20.5937, 78.9629],
+    zoom: 5,
+    zoomControl: true,
+  });
+
+  // CartoDB Dark Matter — dark theme, no API key
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd',
+    maxZoom: 19,
+  }).addTo(map);
+}
+
+function getMarkerColor(riskLevel) {
+  return { low: '#00e676', medium: '#ffd740', high: '#ff4f4f' }[riskLevel] || '#8b92a5';
+}
+
+function createCircleMarker(score) {
+  const color = getMarkerColor(score.riskLevel);
+  return L.circleMarker([score.lat || 20.5, score.lng || 78.9], {
+    radius: 14 + (10 - score.score) * 1.2,
+    fillColor: color,
+    color: '#fff',
+    weight: 2,
+    opacity: 0.9,
+    fillOpacity: 0.75,
+  });
+}
+
+function renderMap() {
+  const scores = getSafetyScores();
+
+  // Stats bar
+  document.getElementById('map-total-locations').textContent = scores.length;
+  document.getElementById('map-avg-score').textContent = scores.length
+    ? (scores.reduce((s, x) => s + x.score, 0) / scores.length).toFixed(1)
+    : '--';
+  document.getElementById('loc-count').textContent = scores.length;
+
+  // Clear existing markers
+  map.eachLayer(l => { if (l instanceof L.CircleMarker) map.removeLayer(l); });
+
+  if (!scores.length) {
+    renderLocationCards([]);
+    return;
+  }
+
+  const bounds = [];
+
+  scores.forEach(s => {
+    const lat = s.lat || 0, lng = s.lng || 0;
+    const marker = createCircleMarker(s);
+    marker.addTo(map);
+    bounds.push([lat || 20.5, lng || 78.9]);
+
+    const complaints = getComplaints().filter(c => c.location.name.toLowerCase() === s.location.toLowerCase());
+    const popupHtml = `
+      <div style="min-width:180px">
+        <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.25rem">📍 ${escHtml(s.location)}</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem">
+          <span style="font-size:1.5rem;font-weight:800;color:${getMarkerColor(s.riskLevel)}">${s.score}</span>
+          <span style="font-size:0.75rem;color:#8b92a5">/ 10 safety score</span>
+        </div>
+        <div style="font-size:0.75rem;margin-bottom:0.5rem">
+          Risk: <strong style="color:${getMarkerColor(s.riskLevel)}">${s.riskLevel.toUpperCase()}</strong>
+        </div>
+        <div style="font-size:0.75rem;color:#8b92a5">${s.basedOn.length} complaint${s.basedOn.length !== 1 ? 's' : ''} reported</div>
+        ${complaints.slice(0,2).map(c => `
+          <div style="margin-top:0.4rem;padding:0.3rem 0.5rem;background:rgba(255,255,255,0.05);border-radius:6px;font-size:0.73rem">
+            ${categoryIcon(c.category)} ${escHtml(c.title)}
+          </div>
+        `).join('')}
+      </div>
+    `;
+    marker.bindPopup(popupHtml, { className: 'custom-popup' });
+
+    // Pulsing glow ring for high-risk
+    if (s.riskLevel === 'high') {
+      L.circleMarker([lat || 20.5, lng || 78.9], {
+        radius: 22, fillColor: 'transparent',
+        color: '#ff4f4f', weight: 1.5, opacity: 0.4, fillOpacity: 0,
+      }).addTo(map);
+    }
+  });
+
+  if (bounds.length) {
+    try { map.fitBounds(bounds, { padding: [60, 60] }); } catch(e) {}
+  }
+
+  renderLocationCards(scores);
+}
+
+function renderLocationCards(scores) {
+  const el = document.getElementById('location-cards');
+  if (!scores.length) {
+    el.innerHTML = `<div class="card" style="grid-column:1/-1">
+      <div class="empty-state"><div class="empty-icon">🗺️</div>
+      <p>No scored locations yet. <a href="report.html" style="color:var(--accent-purple)">Report an incident →</a></p></div></div>`;
+    return;
+  }
+
+  el.innerHTML = scores.map(s => {
+    const color = getMarkerColor(s.riskLevel);
+    const pct   = (s.score / 10) * 100;
+    return `
+    <div class="card" style="padding:1.2rem">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem">
+        <div style="width:44px;height:44px;border-radius:50%;background:conic-gradient(${color} ${pct}%, rgba(255,255,255,0.07) 0);
+             display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="width:34px;height:34px;border-radius:50%;background:var(--bg-primary);display:flex;align-items:center;justify-content:center">
+            <span style="font-weight:800;font-size:0.9rem;color:${color}">${s.score}</span>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:0.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.location)}</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">${s.basedOn.length} incident${s.basedOn.length !== 1 ? 's' : ''}</div>
+        </div>
+        <span class="chip chip-${riskColor(s.riskLevel)}">${s.riskLevel.toUpperCase()}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.4rem;font-size:0.72rem;color:var(--text-muted)">
+        <span>Score</span><span>${s.score} / 10</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  renderMap();
+  initNav && initNav();
+
+  MCPContext.on('complaint:added',   renderMap);
+  MCPContext.on('score:updated',     renderMap);
+});
+</script>
+</body>
+</html>

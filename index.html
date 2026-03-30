@@ -1,13 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyNet — Unified Safety Platform Dashboard</title>
+  <meta name="description" content="Real-time safety dashboard showing complaints, resolved cases, and location safety scores." />
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-    <p>hello world123 final cloneee
-    </p>
-    <p>well done</p>
+
+<!-- ─── Navigation ─────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="index.html" class="logo">
+    <div class="logo-icon">🛡️</div>
+    <span class="brand-text">Safety<span class="brand-accent">Net</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html"           class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="pages/report.html"    class="nav-link"><span class="nav-icon">📝</span> Report</a>
+    <a href="pages/map.html"       class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
+    <a href="pages/evidence.html"  class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
+  </div>
+  <div class="nav-badge">
+    <span class="badge-pill" id="mcp-status">● MCP Live</span>
+  </div>
+</nav>
+
+<!-- ─── Page Content ────────────────────────────────────────────────── -->
+<div class="page-wrapper">
+  <div class="container">
+
+    <!-- Header -->
+    <div class="page-header fade-up">
+      <div class="eyebrow">MCP Dashboard</div>
+      <h1>Unified Safety <span class="gradient-text">Platform</span></h1>
+      <p>Real-time overview of complaints, safety scores, and evidence across all locations.</p>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-grid">
+      <div class="card stat-card purple fade-up fade-up-1">
+        <div class="stat-icon purple">📋</div>
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total Complaints</div>
+        <div class="stat-sub" id="stat-total-sub">No complaints yet</div>
+      </div>
+      <div class="card stat-card pink fade-up fade-up-2">
+        <div class="stat-icon pink">⏳</div>
+        <div class="stat-value" id="stat-pending">0</div>
+        <div class="stat-label">Pending</div>
+        <div class="stat-sub" id="stat-pending-sub">Awaiting review</div>
+      </div>
+      <div class="card stat-card cyan fade-up fade-up-3">
+        <div class="stat-icon cyan">🔄</div>
+        <div class="stat-value" id="stat-progress">0</div>
+        <div class="stat-label">In Progress</div>
+        <div class="stat-sub" id="stat-progress-sub">Being investigated</div>
+      </div>
+      <div class="card stat-card green fade-up fade-up-4">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-value" id="stat-resolved">0</div>
+        <div class="stat-label">Resolved</div>
+        <div class="stat-sub" id="stat-resolved-sub">Cases closed</div>
+      </div>
+    </div>
+
+    <!-- Main grid -->
+    <div class="two-col" style="gap: 1.5rem; align-items: start;">
+
+      <!-- Left: Complaints Feed -->
+      <div>
+        <div class="section-title">
+          📋 Recent Complaints
+          <span class="title-count" id="complaints-count">0</span>
+          <a href="pages/report.html" class="btn btn-primary btn-sm" style="margin-left:auto">+ Report</a>
+        </div>
+        <div class="card" style="padding: 1rem;">
+          <div id="complaints-list">
+            <div class="empty-state">
+              <div class="empty-icon">📭</div>
+              <p>No complaints yet. <a href="pages/report.html" style="color:var(--accent-purple)">File the first one →</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Safety Scores + Evidence -->
+      <div style="display:flex;flex-direction:column;gap:1.5rem;">
+
+        <!-- Safety Score Summary -->
+        <div>
+          <div class="section-title">🛡️ Safety Scores
+            <span class="title-count" id="scores-count">0</span>
+          </div>
+          <div class="card" style="padding: 1rem;">
+            <div id="scores-list">
+              <div class="empty-state">
+                <div class="empty-icon">📍</div>
+                <p>Submit a complaint to generate location scores.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence Summary -->
+        <div>
+          <div class="section-title">🔒 Evidence Vault
+            <span class="title-count" id="evidence-count">0</span>
+            <a href="pages/evidence.html" class="btn btn-ghost btn-sm" style="margin-left:auto">View All</a>
+          </div>
+          <div class="card" style="padding: 1rem;">
+            <div id="evidence-summary">
+              <div class="empty-state">
+                <div class="empty-icon">🗂️</div>
+                <p>No evidence uploaded yet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MCP Data Flow -->
+        <div>
+          <div class="section-title">⚡ MCP Data Flow</div>
+          <div class="card" style="padding:1.2rem;">
+            <div style="display:flex;flex-direction:column;gap:0.6rem;" id="mcp-flow">
+              <div class="mcp-flow-step" style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:1.1rem;">📝</span>
+                <div style="flex:1">
+                  <div style="font-size:0.8rem;font-weight:600;">User submits complaint</div>
+                  <div class="progress-bar"><div class="progress-fill purple" style="width:100%"></div></div>
+                </div>
+                <span class="chip chip-green" id="flow-complaints">0</span>
+              </div>
+              <div class="mcp-flow-step" style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:1.1rem;">🧮</span>
+                <div style="flex:1">
+                  <div style="font-size:0.8rem;font-weight:600;">Safety score recalculated</div>
+                  <div class="progress-bar"><div class="progress-fill purple" id="score-bar" style="width:0%"></div></div>
+                </div>
+                <span class="chip chip-purple" id="flow-score">--</span>
+              </div>
+              <div class="mcp-flow-step" style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:1.1rem;">💾</span>
+                <div style="flex:1">
+                  <div style="font-size:0.8rem;font-weight:600;">Stored to localStorage</div>
+                  <div class="progress-bar"><div class="progress-fill green" style="width:100%"></div></div>
+                </div>
+                <span class="chip chip-green">Active</span>
+              </div>
+              <div class="mcp-flow-step" style="display:flex;align-items:center;gap:0.75rem;">
+                <span style="font-size:1.1rem;">🔒</span>
+                <div style="flex:1">
+                  <div style="font-size:0.8rem;font-weight:600;">Evidence hashed (SHA-256)</div>
+                  <div class="progress-bar"><div class="progress-fill purple" id="evidence-bar" style="width:0%"></div></div>
+                </div>
+                <span class="chip chip-cyan" id="flow-evidence">0 files</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Reset button -->
+    <div style="margin-top:2rem;display:flex;justify-content:flex-end">
+      <button class="btn btn-danger btn-sm" onclick="handleReset()">🗑️ Reset All Data</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- MCP Scripts -->
+<script src="js/mcp-context.js"></script>
+<script src="js/storage.js"></script>
+<script src="js/mcp-functions.js"></script>
+<script src="js/utils.js"></script>
+<script>
+// ─── Dashboard Logic ──────────────────────────────────────────────────────────
+
+function renderDashboard() {
+  const stats    = getStats();
+  const comps    = getComplaints();
+  const scores   = getSafetyScores();
+  const evidence = getEvidence();
+
+  // Stat counters
+  animateCounter(document.getElementById('stat-total'),    stats.total);
+  animateCounter(document.getElementById('stat-pending'),  stats.pending);
+  animateCounter(document.getElementById('stat-progress'), stats.inProgress);
+  animateCounter(document.getElementById('stat-resolved'), stats.resolved);
+
+  document.getElementById('stat-total-sub').textContent    = stats.total   === 0 ? 'No complaints yet' : `${stats.total} filed`;
+  document.getElementById('stat-pending-sub').textContent  = `${stats.pending} awaiting`;
+  document.getElementById('stat-progress-sub').textContent = `${stats.inProgress} active`;
+  document.getElementById('stat-resolved-sub').textContent = `${stats.resolved} closed`;
+  document.getElementById('complaints-count').textContent  = comps.length;
+  document.getElementById('scores-count').textContent      = scores.length;
+  document.getElementById('evidence-count').textContent    = evidence.length;
+
+  // MCP flow panel
+  document.getElementById('flow-complaints').textContent = stats.total;
+  document.getElementById('flow-score').textContent      = stats.avgScore;
+  document.getElementById('flow-evidence').textContent   = stats.evidence + ' files';
+  const scoreBarPct = stats.avgScore !== '--' ? (stats.avgScore / 10) * 100 : 0;
+  document.getElementById('score-bar').style.width    = scoreBarPct + '%';
+  document.getElementById('evidence-bar').style.width = evidence.length > 0 ? '100%' : '0%';
+
+  // Complaints list
+  renderComplaintsList(comps);
+
+  // Safety Scores
+  renderScoresList(scores);
+
+  // Evidence Summary
+  renderEvidenceSummary(evidence);
+}
+
+function renderComplaintsList(comps) {
+  const el = document.getElementById('complaints-list');
+  if (!comps.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div>
+      <p>No complaints yet. <a href="pages/report.html" style="color:var(--accent-purple)">File the first one →</a></p></div>`;
+    return;
+  }
+  const sorted = [...comps].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  el.innerHTML = `<div class="complaint-list">` +
+    sorted.slice(0, 8).map(c => `
+      <div class="complaint-item">
+        <div class="ci-icon" style="background:rgba(${categoryBg(c.category)},0.15)">${categoryIcon(c.category)}</div>
+        <div class="ci-body">
+          <div class="ci-title">${escHtml(c.title)}</div>
+          <div class="ci-meta">
+            <span class="chip chip-${categoryColor(c.category)}">${c.category}</span>
+            <span>📍 ${escHtml(c.location.name)}</span>
+            <span>${formatDate(c.timestamp)}</span>
+          </div>
+        </div>
+        <div class="ci-actions">
+          <select class="status-select" onchange="handleStatusChange('${c.id}', this.value)">
+            <option value="pending"     ${c.status === 'pending'     ? 'selected' : ''}>⏳ Pending</option>
+            <option value="in_progress" ${c.status === 'in_progress' ? 'selected' : ''}>🔄 In Progress</option>
+            <option value="resolved"    ${c.status === 'resolved'    ? 'selected' : ''}>✅ Resolved</option>
+          </select>
+          <button class="btn btn-danger btn-sm" onclick="handleDelete('${c.id}')">✕</button>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+}
+
+function renderScoresList(scores) {
+  const el = document.getElementById('scores-list');
+  if (!scores.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">📍</div>
+      <p>Submit a complaint to generate location scores.</p></div>`;
+    return;
+  }
+  el.innerHTML = scores.map(s => `
+    <div style="display:flex;align-items:center;gap:1rem;padding:0.75rem 0;border-bottom:1px solid var(--glass-border)">
+      <div class="score-ring ${scoreRingClass(s.score)}" style="--pct:${(s.score/10)*360}deg;width:52px;height:52px;">
+        <span class="ring-val" style="font-size:0.85rem">${s.score}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:0.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.location)}</div>
+        <div style="font-size:0.75rem;color:var(--text-secondary)">${s.basedOn.length} complaint${s.basedOn.length !== 1 ? 's' : ''}</div>
+      </div>
+      <span class="chip chip-${riskColor(s.riskLevel)}">${s.riskLevel.toUpperCase()}</span>
+    </div>
+  `).join('');
+}
+
+function renderEvidenceSummary(evidence) {
+  const el = document.getElementById('evidence-summary');
+  if (!evidence.length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-icon">🗂️</div><p>No evidence uploaded yet.</p></div>`;
+    return;
+  }
+  el.innerHTML = evidence.slice(-3).reverse().map(e => `
+    <div style="padding:0.6rem 0;border-bottom:1px solid var(--glass-border)">
+      <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.2rem">📄 ${escHtml(e.fileName)}</div>
+      <div class="mono" style="font-size:0.7rem">${e.hash.slice(0,32)}…</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem">${formatDate(e.uploadedAt)}</div>
+    </div>
+  `).join('');
+}
+
+function handleStatusChange(id, status) {
+  updateStatus(id, status);
+  showToast(`Status updated to ${status.replace('_', ' ')}`, 'success');
+  renderDashboard();
+}
+
+function handleDelete(id) {
+  if (!confirm('Delete this complaint?')) return;
+  deleteComplaint(id);
+  showToast('Complaint deleted', 'info');
+  renderDashboard();
+}
+
+function handleReset() {
+  if (!confirm('⚠️ Delete ALL data? This cannot be undone.')) return;
+  clearStorage();
+  showToast('All data has been reset', 'info');
+  renderDashboard();
+}
+
+function categoryBg(cat) {
+  return { harassment: '255,101,132', theft: '255,215,64', accident: '0,212,255' }[cat] || '139,146,165';
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── MCP Event Subscriptions ──────────────────────────────────────────────────
+MCPContext.on('complaint:added',   () => renderDashboard());
+MCPContext.on('complaint:updated', () => renderDashboard());
+MCPContext.on('evidence:added',    () => renderDashboard());
+MCPContext.on('score:updated',     () => renderDashboard());
+
+// Initial render
+document.addEventListener('DOMContentLoaded', renderDashboard);
+</script>
 </body>
 </html>

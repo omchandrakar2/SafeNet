@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyNet — Report a Complaint</title>
+  <meta name="description" content="File a new safety complaint including location, category, and description." />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+<!-- ─── Navigation ──────────────────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="../index.html" class="logo">
+    <div class="logo-icon">🛡️</div>
+    <span class="brand-text">Safety<span class="brand-accent">Net</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="../index.html"          class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="report.html"            class="nav-link"><span class="nav-icon">📝</span> Report</a>
+    <a href="map.html"               class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
+    <a href="evidence.html"          class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
+  </div>
+  <div class="nav-badge">
+    <span class="badge-pill">● MCP Live</span>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container" style="max-width: 760px;">
+
+    <!-- Header -->
+    <div class="page-header fade-up">
+      <div class="eyebrow">MCP · addComplaint()</div>
+      <h1>Report a <span class="gradient-text">Safety Incident</span></h1>
+      <p>Your report is hashed, timestamped, and stored securely. Location data drives the safety score engine.</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="card fade-up fade-up-1">
+      <form id="complaint-form" novalidate>
+
+        <!-- Title -->
+        <div class="form-group">
+          <label class="form-label" for="inp-title">Incident Title *</label>
+          <input type="text" id="inp-title" class="form-control"
+                 placeholder="Brief description of the incident" maxlength="120" required />
+          <div class="field-hint" style="font-size:0.72rem;color:var(--text-muted);margin-top:0.3rem" id="title-count">0 / 120</div>
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label class="form-label" for="inp-category">Incident Category *</label>
+          <select id="inp-category" class="form-control" required>
+            <option value="" disabled selected>— Select a category —</option>
+            <option value="harassment">😡 Harassment</option>
+            <option value="theft">🔓 Theft</option>
+            <option value="accident">🚗 Accident</option>
+          </select>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label class="form-label" for="inp-desc">Description *</label>
+          <textarea id="inp-desc" class="form-control" rows="4"
+                    placeholder="Describe what happened in detail…" required></textarea>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Location -->
+        <div style="margin-bottom:0.75rem;">
+          <div class="section-title" style="margin-bottom:0.25rem">📍 Location</div>
+          <p style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:1rem">
+            Enter the location manually or
+            <button type="button" id="geo-btn" class="btn btn-ghost btn-sm">📡 Use My Location</button>
+          </p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="inp-location">Location Name *</label>
+          <input type="text" id="inp-location" class="form-control"
+                 placeholder="e.g. Koramangala Metro Station" required />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="inp-lat">Latitude</label>
+            <input type="number" id="inp-lat" class="form-control" placeholder="12.9716" step="any" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="inp-lng">Longitude</label>
+            <input type="number" id="inp-lng" class="form-control" placeholder="77.5946" step="any" />
+          </div>
+        </div>
+
+        <!-- Category Impact Preview -->
+        <div id="impact-preview" style="display:none;margin-bottom:1.25rem;">
+          <div class="card" style="padding:1rem;background:rgba(108,99,255,0.07);border-color:rgba(108,99,255,0.2);">
+            <div style="font-size:0.8rem;font-weight:600;margin-bottom:0.4rem;color:var(--accent-purple)">⚡ Safety Score Impact</div>
+            <div style="font-size:0.85rem;color:var(--text-secondary)" id="impact-text"></div>
+          </div>
+        </div>
+
+        <hr class="divider" />
+
+        <!-- Submit -->
+        <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+          <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+            📝 Submit Complaint
+          </button>
+          <button type="button" class="btn btn-ghost" onclick="resetForm()">Reset</button>
+          <div style="margin-left:auto;display:flex;gap:0.5rem;align-items:center;font-size:0.8rem;color:var(--text-muted)">
+            🔐 Stored securely via MCP
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- MCP Lifecycle Note -->
+    <div class="card fade-up fade-up-2" style="margin-top:1.5rem;padding:1.2rem;">
+      <div class="section-title" style="margin-bottom:0.75rem">⚡ MCP Event Lifecycle</div>
+      <div style="display:flex;flex-direction:column;gap:0.5rem;">
+        <div class="lifecycle-step" id="lc-1" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
+          <span style="font-size:1rem">1️⃣</span>
+          <div style="flex:1;font-size:0.8rem"><strong>addComplaint()</strong> called — context updated</div>
+          <span class="chip chip-gray">Waiting</span>
+        </div>
+        <div class="lifecycle-step" id="lc-2" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
+          <span style="font-size:1rem">2️⃣</span>
+          <div style="flex:1;font-size:0.8rem"><strong>updateSafetyScore()</strong> — score engine runs</div>
+          <span class="chip chip-gray">Waiting</span>
+        </div>
+        <div class="lifecycle-step" id="lc-3" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
+          <span style="font-size:1rem">3️⃣</span>
+          <div style="flex:1;font-size:0.8rem"><strong>saveToStorage()</strong> — localStorage synced</div>
+          <span class="chip chip-gray">Waiting</span>
+        </div>
+        <div class="lifecycle-step" id="lc-4" style="display:flex;gap:0.75rem;align-items:center;opacity:0.4;transition:opacity 0.4s">
+          <span style="font-size:1rem">4️⃣</span>
+          <div style="flex:1;font-size:0.8rem"><strong>MCP Event</strong> emitted → Dashboard auto-updates</div>
+          <span class="chip chip-gray">Waiting</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/mcp-context.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/mcp-functions.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+// ─── Form Logic ───────────────────────────────────────────────────────────────
+
+const form    = document.getElementById('complaint-form');
+const titleEl = document.getElementById('inp-title');
+const catEl   = document.getElementById('inp-category');
+
+// Character count
+titleEl.addEventListener('input', () => {
+  document.getElementById('title-count').textContent = titleEl.value.length + ' / 120';
+});
+
+// Category impact preview
+catEl.addEventListener('change', () => {
+  const impacts = {
+    harassment: '😡 Harassment reduces safety score by <strong>−2 points</strong> per report.',
+    theft:      '🔓 Theft reduces safety score by <strong>−1.5 points</strong> per report.',
+    accident:   '🚗 Accident reduces safety score by <strong>−1 point</strong> per report.',
+  };
+  const preview = document.getElementById('impact-preview');
+  const text    = document.getElementById('impact-text');
+  if (catEl.value) {
+    preview.style.display = 'block';
+    text.innerHTML = impacts[catEl.value] || '';
+  } else {
+    preview.style.display = 'none';
+  }
+});
+
+// Geolocation
+document.getElementById('geo-btn').addEventListener('click', () => {
+  const btn = document.getElementById('geo-btn');
+  btn.innerHTML = '<span class="spinner"></span> Locating…';
+  btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('inp-lat').value = pos.coords.latitude.toFixed(6);
+      document.getElementById('inp-lng').value = pos.coords.longitude.toFixed(6);
+      btn.innerHTML = '✅ Location Set';
+      btn.disabled = false;
+      showToast('GPS coordinates captured!', 'success');
+    },
+    err => {
+      btn.innerHTML = '📡 Use My Location';
+      btn.disabled = false;
+      showToast('Could not get location. Enter manually.', 'error');
+    }
+  );
+});
+
+// Form submit
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const title    = titleEl.value.trim();
+  const category = catEl.value;
+  const desc     = document.getElementById('inp-desc').value.trim();
+  const locName  = document.getElementById('inp-location').value.trim();
+  const lat      = parseFloat(document.getElementById('inp-lat').value) || 0;
+  const lng      = parseFloat(document.getElementById('inp-lng').value) || 0;
+
+  if (!title || !category || !desc || !locName) {
+    showToast('Please fill in all required fields.', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.innerHTML = '<span class="spinner"></span> Submitting…';
+  btn.disabled = true;
+
+  // Simulate MCP lifecycle animation
+  await animateMCPLifecycle();
+
+  const complaint = addComplaint({
+    title, category, description: desc,
+    location: { name: locName, lat, lng }
+  });
+
+  btn.innerHTML = '📝 Submit Complaint';
+  btn.disabled = false;
+
+  showToast(`Complaint "${title}" filed successfully!`, 'success');
+  document.getElementById('lc-4').children[2].className = 'chip chip-green';
+  document.getElementById('lc-4').children[2].textContent = '✓ Done';
+
+  setTimeout(() => { window.location.href = '../index.html'; }, 1800);
+});
+
+async function animateMCPLifecycle() {
+  const steps = [
+    { id: 'lc-1', label: '✓ Added',    chip: 'chip-purple', delay: 0 },
+    { id: 'lc-2', label: '✓ Scored',   chip: 'chip-yellow', delay: 400 },
+    { id: 'lc-3', label: '✓ Saved',    chip: 'chip-green',  delay: 800 },
+    { id: 'lc-4', label: '✓ Emitted',  chip: 'chip-cyan',   delay: 1200 },
+  ];
+  for (const s of steps) {
+    await new Promise(r => setTimeout(r, s.delay));
+    const el = document.getElementById(s.id);
+    el.style.opacity = '1';
+    el.children[2].className = `chip ${s.chip}`;
+    el.children[2].textContent = s.label;
+  }
+  await new Promise(r => setTimeout(r, 400));
+}
+
+function resetForm() {
+  form.reset();
+  document.getElementById('impact-preview').style.display = 'none';
+  document.getElementById('title-count').textContent = '0 / 120';
+  ['lc-1','lc-2','lc-3','lc-4'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.opacity = '0.4';
+    el.children[2].className = 'chip chip-gray';
+    el.children[2].textContent = 'Waiting';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => initNav && initNav());
+</script>
+</body>
+</html>

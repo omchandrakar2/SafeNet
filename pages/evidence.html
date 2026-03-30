@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyNet — Evidence Vault</title>
+  <meta name="description" content="Upload and hash evidence files using SHA-256. Tamper-proof evidence storage for safety complaints." />
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../index.html" class="logo">
+    <div class="logo-icon">🛡️</div>
+    <span class="brand-text">Safety<span class="brand-accent">Net</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="../index.html"         class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="report.html"           class="nav-link"><span class="nav-icon">📝</span> Report</a>
+    <a href="map.html"              class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
+    <a href="evidence.html"         class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
+  </div>
+  <div class="nav-badge"><span class="badge-pill">● MCP Live</span></div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="page-header fade-up">
+      <div class="eyebrow">MCP · addEvidence() · SHA-256</div>
+      <h1>Evidence <span class="gradient-text">Vault</span></h1>
+      <p>Upload files and generate tamper-proof SHA-256 cryptographic hashes. Linked to complaint IDs via MCP context.</p>
+    </div>
+
+    <div class="two-col" style="align-items:start;">
+
+      <!-- Upload Panel -->
+      <div>
+        <div class="section-title" style="margin-bottom:1rem">📤 Upload Evidence</div>
+
+        <!-- Drop Zone -->
+        <div class="drop-zone fade-up fade-up-1" id="drop-zone" role="button" tabindex="0" aria-label="Upload evidence file">
+          <div class="dz-icon">🗂️</div>
+          <p><strong>Drag & drop</strong> files here</p>
+          <p style="margin-top:0.3rem;font-size:0.8rem">or <strong style="color:var(--accent-purple);cursor:pointer" onclick="document.getElementById('file-input').click()">browse to upload</strong></p>
+          <p style="margin-top:0.5rem;font-size:0.72rem;color:var(--text-muted)">Any file type supported · Max 50 MB</p>
+          <input type="file" id="file-input" style="display:none" multiple />
+        </div>
+
+        <!-- Staged file preview -->
+        <div id="staged-files" style="margin-top:1rem;display:flex;flex-direction:column;gap:0.5rem"></div>
+
+        <!-- Link to complaint -->
+        <div class="card fade-up fade-up-2" style="margin-top:1.25rem;padding:1.2rem;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" for="link-complaint">Link to Complaint (optional)</label>
+            <select id="link-complaint" class="form-control">
+              <option value="unlinked">— Upload without linking —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Upload Button -->
+        <div style="margin-top:1rem;">
+          <button class="btn btn-primary btn-lg" id="upload-btn" disabled onclick="handleUpload()">
+            🔒 Hash &amp; Store Evidence
+          </button>
+        </div>
+
+        <!-- Hash Algorithm Note -->
+        <div class="card fade-up fade-up-3" style="margin-top:1.25rem;padding:1rem;border-color:rgba(0,212,255,0.2);">
+          <div style="font-size:0.78rem;font-weight:700;color:var(--accent-cyan);margin-bottom:0.5rem;letter-spacing:0.5px">🔐 HOW HASHING WORKS</div>
+          <div style="font-size:0.8rem;color:var(--text-secondary);line-height:1.7">
+            Each file's bytes are processed by the browser's native
+            <strong style="color:var(--text-primary)">Web Crypto API</strong> using the
+            <strong style="color:var(--accent-cyan)">SHA-256</strong> algorithm.<br/>
+            The resulting 64-character hex digest is unique to that exact file.
+            Any modification, even one byte, produces a completely different hash — making evidence
+            <strong style="color:var(--text-primary)">tamper-proof</strong>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Evidence List -->
+      <div>
+        <div class="section-title">
+          🔒 Stored Evidence
+          <span class="title-count" id="evidence-total">0</span>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="renderVault()">↻ Refresh</button>
+        </div>
+
+        <div id="vault-list">
+          <div class="card">
+            <div class="empty-state">
+              <div class="empty-icon">🗂️</div>
+              <p>No evidence uploaded yet.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/mcp-context.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/mcp-functions.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+let stagedFiles = [];
+
+// ─── Drag & Drop ──────────────────────────────────────────────────────────────
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  stageFiles([...e.dataTransfer.files]);
+});
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+fileInput.addEventListener('change', () => { stageFiles([...fileInput.files]); fileInput.value = ''; });
+
+function stageFiles(files) {
+  files.forEach(f => {
+    if (f.size > 50 * 1024 * 1024) { showToast(`${f.name} is too large (max 50 MB)`, 'error'); return; }
+    if (!stagedFiles.find(s => s.name === f.name && s.size === f.size)) stagedFiles.push(f);
+  });
+  renderStaged();
+}
+
+function renderStaged() {
+  const container = document.getElementById('staged-files');
+  document.getElementById('upload-btn').disabled = stagedFiles.length === 0;
+
+  if (!stagedFiles.length) { container.innerHTML = ''; return; }
+
+  container.innerHTML = stagedFiles.map((f, i) => `
+    <div class="card" style="padding:0.8rem 1rem;display:flex;align-items:center;gap:0.75rem;">
+      <span style="font-size:1.2rem">${fileEmoji(f.name)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:0.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(f.name)}</div>
+        <div style="font-size:0.72rem;color:var(--text-muted)">${formatBytes(f.size)}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeStaged(${i})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeStaged(i) { stagedFiles.splice(i, 1); renderStaged(); }
+
+// ─── Upload Handler ───────────────────────────────────────────────────────────
+async function handleUpload() {
+  if (!stagedFiles.length) return;
+  const btn = document.getElementById('upload-btn');
+  const complaintId = document.getElementById('link-complaint').value;
+
+  btn.innerHTML = '<span class="spinner"></span> Hashing files…';
+  btn.disabled = true;
+
+  for (const file of stagedFiles) {
+    try {
+      showToast(`Hashing ${file.name}…`, 'info', 2000);
+      const evidence = await addEvidence(file, complaintId);
+      showToast(`✅ Hashed: ${file.name.slice(0,20)}…`, 'success');
+      console.log('[Evidence] SHA-256:', evidence.hash);
+    } catch(e) {
+      showToast(`Failed to hash ${file.name}`, 'error');
+    }
+  }
+
+  stagedFiles = [];
+  renderStaged();
+  renderVault();
+
+  btn.innerHTML = '🔒 Hash &amp; Store Evidence';
+  btn.disabled = false;
+}
+
+// ─── Vault Render ─────────────────────────────────────────────────────────────
+function renderVault() {
+  const evidence = getEvidence();
+  document.getElementById('evidence-total').textContent = evidence.length;
+
+  const el = document.getElementById('vault-list');
+  if (!evidence.length) {
+    el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-icon">🗂️</div><p>No evidence uploaded yet.</p></div></div>`;
+    return;
+  }
+
+  const sorted = [...evidence].sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
+  el.innerHTML = `<div style="display:flex;flex-direction:column;gap:0.75rem;">` +
+    sorted.map(e => {
+      const complaint = getComplaintById(e.complaintId);
+      return `
+      <div class="evidence-item fade-up">
+        <div class="evidence-meta">
+          <span class="evidence-filename">${fileEmoji(e.fileName)} ${escHtml(e.fileName)}</span>
+          <div style="display:flex;gap:0.4rem;align-items:center;">
+            <span class="chip chip-gray">${formatBytes(e.fileSize || 0)}</span>
+            ${complaint ? `<span class="chip chip-purple" title="Linked complaint">🔗 ${escHtml(complaint.title.slice(0,18))}…</span>` : '<span class="chip chip-gray">Unlinked</span>'}
+          </div>
+        </div>
+        <div class="evidence-hash-label">SHA-256 Hash</div>
+        <div class="mono" id="hash-${e.id}" style="cursor:pointer;user-select:all" title="Click to copy" onclick="copyHash('${e.hash}', '${e.id}')">${e.hash}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.5rem">
+          <div style="font-size:0.72rem;color:var(--text-muted)">Uploaded ${formatDate(e.uploadedAt)}</div>
+          <div style="display:flex;gap:0.4rem">
+            <button class="btn btn-ghost btn-sm" onclick="copyHash('${e.hash}', '${e.id}')">📋 Copy</button>
+            <button class="btn btn-danger btn-sm" onclick="removeEvidence('${e.id}')">✕</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('') + `</div>`;
+}
+
+function copyHash(hash, id) {
+  navigator.clipboard.writeText(hash).then(() => {
+    showToast('Hash copied to clipboard!', 'success', 2500);
+  }).catch(() => {
+    // Fallback
+    const el = document.getElementById('hash-' + id);
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    showToast('Select the hash above and copy manually.', 'info');
+  });
+}
+
+function removeEvidence(id) {
+  const idx = MCPContext.evidence.findIndex(e => e.id === id);
+  if (idx !== -1) { MCPContext.evidence.splice(idx, 1); saveToStorage(); renderVault(); showToast('Evidence removed', 'info'); }
+}
+
+// ─── Populate complaint dropdown ──────────────────────────────────────────────
+function populateComplaintDropdown() {
+  const sel = document.getElementById('link-complaint');
+  const complaints = getComplaints();
+  sel.innerHTML = '<option value="unlinked">— Upload without linking —</option>' +
+    complaints.map(c => `<option value="${c.id}">${escHtml(c.title.slice(0,40))} — ${c.location.name}</option>`).join('');
+}
+
+function fileEmoji(name) {
+  const ext = (name || '').split('.').pop().toLowerCase();
+  const map = { jpg:'🖼️', jpeg:'🖼️', png:'🖼️', gif:'🖼️', mp4:'🎥', mov:'🎥', avi:'🎥',
+                pdf:'📄', doc:'📝', docx:'📝', txt:'📄', mp3:'🎵', wav:'🎵', zip:'🗜️' };
+  return map[ext] || '📎';
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  populateComplaintDropdown();
+  renderVault();
+  initNav && initNav();
+
+  // Refresh dropdown when complaints change
+  MCPContext.on('complaint:added', populateComplaintDropdown);
+  MCPContext.on('evidence:added',  renderVault);
+});
+</script>
+</body>
+</html>
