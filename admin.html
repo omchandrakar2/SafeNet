@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeNet — Admin Dashboard</title>
+  <meta name="description" content="SafeNet Admin — manage, verify, and moderate incident reports." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ─── Loading ──────────────────────────────────────── -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner-ring"></div>
+  <div class="loading-text">Loading Admin Dashboard…</div>
+</div>
+
+<!-- ─── Navbar ──────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="admin.html" class="nav-logo">
+    <div class="nav-logo-icon">🛡️</div>
+    <div class="nav-logo-text">Safe<span>Net</span></div>
+  </a>
+  <div class="nav-pill" style="background:rgba(108,99,255,0.1);border-color:rgba(108,99,255,0.2);color:var(--primary);">
+    <span>🔧</span> Admin Panel
+  </div>
+  <div class="nav-spacer"></div>
+  <button class="nav-btn" id="theme-toggle" title="Toggle dark mode">🌙</button>
+  <div class="nav-avatar" id="user-avatar" onclick="toggleUserMenu()" title="Admin account">A</div>
+  <div id="user-menu" style="
+    display:none; position:absolute; top:calc(var(--nav-h) + 0.5rem); right:1.25rem;
+    background: var(--bg-modal); border: 1px solid var(--glass-border);
+    border-radius: var(--r-md); box-shadow: var(--shadow-lg);
+    padding: 0.75rem; min-width: 180px; z-index: 1200;
+    font-size: 0.85rem; color: var(--text);
+  ">
+    <div id="user-email" style="font-weight:600;padding:0.4rem 0.6rem;border-bottom:1px solid var(--glass-border);margin-bottom:0.4rem;"></div>
+    <div style="padding:0.2rem 0.6rem;margin-bottom:0.4rem;"><span class="verified-badge yes">🔧 Admin</span></div>
+    <button onclick="handleSignOut()" class="btn btn-danger btn-sm btn-block" style="margin-top:0.4rem;">Sign Out</button>
+  </div>
+</nav>
+
+<!-- ─── Admin Layout ────────────────────────────────── -->
+<div class="admin-layout">
+
+  <!-- ─── Page Title ──────────────────────────────── -->
+  <div style="margin-bottom:1.5rem;">
+    <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:0.3rem;">Admin Dashboard</h1>
+    <p style="font-size:0.85rem;color:var(--text-3);">Manage, verify, and moderate community reports.</p>
+  </div>
+
+  <!-- ─── Stat Cards ─────────────────────────────── -->
+  <div class="admin-stats">
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">📊</div>
+      <div class="admin-stat-value" id="stat-total">0</div>
+      <div class="admin-stat-label">Total Reports</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">✅</div>
+      <div class="admin-stat-value" id="stat-verified" style="color:var(--success)">0</div>
+      <div class="admin-stat-label">Verified</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">⏳</div>
+      <div class="admin-stat-value" id="stat-pending" style="color:var(--warning)">0</div>
+      <div class="admin-stat-label">Pending</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">🔴</div>
+      <div class="admin-stat-value" id="stat-high-risk" style="color:var(--danger)">0</div>
+      <div class="admin-stat-label">High Severity</div>
+    </div>
+    <div class="admin-stat-card">
+      <div class="admin-stat-icon">👥</div>
+      <div class="admin-stat-value" id="stat-users">0</div>
+      <div class="admin-stat-label">Registered Users</div>
+    </div>
+  </div>
+
+  <!-- ─── Filter Bar ─────────────────────────────── -->
+  <div class="admin-filters">
+    <span class="filter-label">Filters:</span>
+    <!-- Type -->
+    <select class="form-control" id="filter-type" onchange="applyAdminFilters()" style="width:auto;min-width:120px;padding:0.4rem 0.6rem;font-size:0.78rem;">
+      <option value="all">All Types</option>
+      <option value="theft">🔓 Theft</option>
+      <option value="harassment">😤 Harassment</option>
+      <option value="assault">🥊 Assault</option>
+      <option value="stalking">👁 Stalking</option>
+      <option value="unsafe">⚠️ Unsafe</option>
+      <option value="vandalism">🔨 Vandalism</option>
+    </select>
+    <!-- Severity -->
+    <select class="form-control" id="filter-severity" onchange="applyAdminFilters()" style="width:auto;min-width:120px;padding:0.4rem 0.6rem;font-size:0.78rem;">
+      <option value="all">All Severity</option>
+      <option value="high">High (4–5)</option>
+      <option value="medium">Medium (2–3)</option>
+      <option value="low">Low (1)</option>
+    </select>
+    <!-- Verification -->
+    <select class="form-control" id="filter-verified" onchange="applyAdminFilters()" style="width:auto;min-width:130px;padding:0.4rem 0.6rem;font-size:0.78rem;">
+      <option value="all">All Status</option>
+      <option value="verified">✅ Verified</option>
+      <option value="pending">⏳ Pending</option>
+    </select>
+    <div style="flex:1;"></div>
+    <span id="filter-count" style="font-size:0.75rem;color:var(--text-3);font-weight:600;"></span>
+  </div>
+
+  <!-- ─── Reports Table ──────────────────────────── -->
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Location</th>
+          <th>Time</th>
+          <th>User</th>
+          <th>Evidence</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="reports-tbody">
+        <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-3);">Loading reports…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ─── Evidence Verification Section ──────────── -->
+  <div class="evidence-card">
+    <div class="evidence-title">🔐 Evidence Verification Tool</div>
+    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:1rem;">
+      Re-upload a file to compare its SHA-256 hash against a report's stored hash.
+      Matching hashes confirm the evidence is authentic and untampered.
+    </p>
+    <div class="form-group">
+      <label class="form-label" for="verify-report-select">Select Report</label>
+      <select class="form-control" id="verify-report-select" onchange="loadReportHash()">
+        <option value="">— Choose a report —</option>
+      </select>
+    </div>
+    <div id="stored-hash-display" style="display:none;margin-bottom:1rem;">
+      <div class="form-label">Stored Hash</div>
+      <div class="hash-display" id="stored-hash"></div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="verify-file">Re-upload Evidence File</label>
+      <input type="file" class="form-control" id="verify-file" accept="image/*,video/*,.pdf" onchange="verifyEvidenceFile(this)" />
+    </div>
+    <div id="verify-result" style="display:none;"></div>
+  </div>
+
+</div>
+
+<!-- ─── Toast container ──────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ─── Scripts ──────────────────────────────────────── -->
+<script src="firebase.js"></script>
+<script>
+/* ─── Severity Weights (same as script.js) ──────── */
+const SEVERITY = {
+  theft: 2, harassment: 3, assault: 5,
+  stalking: 4, unsafe: 1, vandalism: 2,
+};
+const TYPE_CONFIG = {
+  theft:      { emoji: '🔓', color: '#f97316', label: 'Theft' },
+  harassment: { emoji: '😤', color: '#8b5cf6', label: 'Harassment' },
+  assault:    { emoji: '🥊', color: '#ef4444', label: 'Assault' },
+  stalking:   { emoji: '👁',  color: '#ec4899', label: 'Stalking' },
+  unsafe:     { emoji: '⚠️', color: '#f59e0b', label: 'Unsafe Area' },
+  vandalism:  { emoji: '🔨', color: '#6366f1', label: 'Vandalism' },
+};
+
+let allReports = [];
+let filteredReports = [];
+let currentUser = null;
+
+/* ─── Theme ─────────────────────────────────────── */
+const html = document.documentElement;
+const themeBtn = document.getElementById('theme-toggle');
+function applyTheme(t) {
+  html.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('sn-theme', t);
+}
+themeBtn.addEventListener('click', () => applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+(function(){
+  const s = localStorage.getItem('sn-theme');
+  applyTheme(s || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'));
+})();
+
+/* ─── Toast ─────────────────────────────────────── */
+function showToast(message, type = 'info', duration = 4000) {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span style="font-size:1.1rem;flex-shrink:0">${icons[type] || 'ℹ️'}</span>
+    <span style="flex:1">${message}</span>
+    <button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>
+  `;
+  container.prepend(toast);
+  setTimeout(() => {
+    toast.classList.add('removing');
+    setTimeout(() => toast.remove(), 320);
+  }, duration);
+}
+
+/* ─── Time Ago ──────────────────────────────────── */
+function timeAgo(date) {
+  if (!date) return 'Unknown';
+  const secs = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (secs < 60)    return 'Just now';
+  if (secs < 3600)  return `${Math.floor(secs / 60)}m ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
+  if (secs < 604800) return `${Math.floor(secs / 86400)}d ago`;
+  return date.toLocaleDateString();
+}
+
+/* ─── User Menu ─────────────────────────────────── */
+function toggleUserMenu() {
+  const menu = document.getElementById('user-menu');
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#user-menu') && !e.target.closest('#user-avatar'))
+    document.getElementById('user-menu').style.display = 'none';
+});
+
+async function handleSignOut() {
+  await SafeNet.signOut();
+  window.location.href = 'login.html';
+}
+
+/* ─── Auth Guard ────────────────────────────────── */
+SafeNet.onAuthChange(user => {
+  if (!user) {
+    window.location.href = 'login.html';
+    return;
+  }
+  if (user.role !== 'admin') {
+    window.location.href = 'index.html';
+    return;
+  }
+  currentUser = user;
+  document.getElementById('user-avatar').textContent = (user.displayName || user.email || 'A').charAt(0).toUpperCase();
+  document.getElementById('user-email').textContent = user.displayName || user.email;
+
+  // Load data
+  initAdmin();
+});
+
+/* ─── Init Admin ────────────────────────────────── */
+function initAdmin() {
+  SafeNet.subscribeToReports(reports => {
+    allReports = reports;
+    updateStats();
+    applyAdminFilters();
+    updateVerifyDropdown();
+    document.getElementById('loading').classList.add('hidden');
+  });
+
+  // User count
+  const users = SafeNet.getAllUsers();
+  document.getElementById('stat-users').textContent = users.length;
+}
+
+/* ─── Update Stats ──────────────────────────────── */
+function updateStats() {
+  const total    = allReports.length;
+  const verified = allReports.filter(r => r.verified).length;
+  const pending  = total - verified;
+  const highSev  = allReports.filter(r => (SEVERITY[r.type] || 0) >= 4).length;
+
+  document.getElementById('stat-total').textContent     = total;
+  document.getElementById('stat-verified').textContent  = verified;
+  document.getElementById('stat-pending').textContent   = pending;
+  document.getElementById('stat-high-risk').textContent = highSev;
+
+  const users = SafeNet.getAllUsers();
+  document.getElementById('stat-users').textContent = users.length;
+}
+
+/* ─── Admin Filters ─────────────────────────────── */
+function applyAdminFilters() {
+  const typeF     = document.getElementById('filter-type').value;
+  const sevF      = document.getElementById('filter-severity').value;
+  const verifiedF = document.getElementById('filter-verified').value;
+
+  filteredReports = allReports.filter(r => {
+    if (typeF !== 'all' && r.type !== typeF) return false;
+
+    const sev = SEVERITY[r.type] || 1;
+    if (sevF === 'high'   && sev < 4) return false;
+    if (sevF === 'medium' && (sev < 2 || sev > 3)) return false;
+    if (sevF === 'low'    && sev !== 1) return false;
+
+    if (verifiedF === 'verified' && !r.verified) return false;
+    if (verifiedF === 'pending'  && r.verified)  return false;
+
+    return true;
+  });
+
+  document.getElementById('filter-count').textContent = `Showing ${filteredReports.length} of ${allReports.length} reports`;
+  renderTable(filteredReports);
+}
+
+/* ─── Render Table ──────────────────────────────── */
+function renderTable(reports) {
+  const tbody = document.getElementById('reports-tbody');
+
+  if (!reports.length) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-3);">
+      <div style="font-size:1.5rem;margin-bottom:0.3rem;">📭</div>No reports match your filters.
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = reports.map(r => {
+    const cfg = TYPE_CONFIG[r.type] || { emoji: '📍', color: '#6c63ff', label: r.type };
+    const sev = SEVERITY[r.type] || 1;
+    const sevColor = sev >= 4 ? '#ef4444' : sev >= 2 ? '#f59e0b' : '#10b981';
+
+    const evidenceHtml = r.evidenceHash
+      ? `<span style="color:var(--success);font-size:0.7rem;font-weight:600;">📎 ${r.evidenceHash.slice(0, 8)}…</span>`
+      : '<span style="color:var(--text-3);font-size:0.7rem;">None</span>';
+
+    const verBadge = r.verified
+      ? '<span class="verified-badge yes">✅ Verified</span>'
+      : '<span class="verified-badge no">⏳ Pending</span>';
+
+    const verifyBtn = r.verified
+      ? `<button class="btn btn-ghost btn-sm" onclick="handleUnverify('${r.id}')" title="Unverify">↩️</button>`
+      : `<button class="btn btn-success btn-sm" onclick="handleVerify('${r.id}')" title="Verify">✅</button>`;
+
+    // Get user email for display
+    const users = SafeNet.getAllUsers();
+    const reportUser = users.find(u => u.uid === r.userId);
+    const userName = reportUser ? (reportUser.displayName || reportUser.email) : (r.userId === 'guest' ? 'Guest' : r.userId.slice(0, 8));
+
+    return `<tr>
+      <td>
+        <span class="type-cell" style="background:${cfg.color}15;color:${cfg.color};border:1px solid ${cfg.color}33">
+          ${cfg.emoji} ${cfg.label}
+        </span>
+        <div style="font-size:0.65rem;color:${sevColor};font-weight:700;margin-top:0.2rem;">Severity: ${sev}</div>
+      </td>
+      <td style="max-width:200px;">
+        <div style="font-size:0.8rem;line-height:1.35;">${r.description || '<em style="opacity:0.5">No description</em>'}</div>
+      </td>
+      <td style="font-size:0.75rem;color:var(--text-3);">
+        ${r.lat ? `${r.lat.toFixed(4)}, ${r.lng.toFixed(4)}` : '—'}
+      </td>
+      <td style="font-size:0.75rem;white-space:nowrap;">${timeAgo(r.time)}</td>
+      <td style="font-size:0.75rem;">${userName}</td>
+      <td>${evidenceHtml}</td>
+      <td>${verBadge}</td>
+      <td>
+        <div class="actions-cell">
+          ${verifyBtn}
+          <button class="btn btn-danger btn-sm" onclick="handleDelete('${r.id}')" title="Delete">🗑️</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+/* ─── Report Actions ────────────────────────────── */
+async function handleVerify(reportId) {
+  await SafeNet.verifyReport(reportId, currentUser.uid);
+  showToast('Report verified ✅', 'success');
+}
+
+async function handleUnverify(reportId) {
+  await SafeNet.unverifyReport(reportId);
+  showToast('Verification removed.', 'info');
+}
+
+async function handleDelete(reportId) {
+  if (!confirm('Delete this report permanently?')) return;
+  await SafeNet.deleteReport(reportId);
+  showToast('Report deleted.', 'info');
+}
+
+/* ─── Evidence Verification ─────────────────────── */
+function updateVerifyDropdown() {
+  const select = document.getElementById('verify-report-select');
+  const reportsWithEvidence = allReports.filter(r => r.evidenceHash);
+
+  select.innerHTML = '<option value="">— Choose a report —</option>'
+    + reportsWithEvidence.map(r => {
+      const cfg = TYPE_CONFIG[r.type] || { emoji: '📍', label: r.type };
+      return `<option value="${r.id}">${cfg.emoji} ${cfg.label} — ${timeAgo(r.time)} (${r.evidenceHash.slice(0, 10)}…)</option>`;
+    }).join('');
+}
+
+function loadReportHash() {
+  const id = document.getElementById('verify-report-select').value;
+  const hashDisplay = document.getElementById('stored-hash-display');
+  const storedHash  = document.getElementById('stored-hash');
+  const result      = document.getElementById('verify-result');
+
+  if (!id) {
+    hashDisplay.style.display = 'none';
+    result.style.display = 'none';
+    return;
+  }
+
+  const report = SafeNet.getReportById(id);
+  if (report && report.evidenceHash) {
+    storedHash.textContent = report.evidenceHash;
+    hashDisplay.style.display = 'block';
+  }
+  result.style.display = 'none';
+}
+
+async function verifyEvidenceFile(input) {
+  const result = document.getElementById('verify-result');
+  const reportId = document.getElementById('verify-report-select').value;
+
+  if (!reportId) {
+    showToast('Select a report first.', 'warning');
+    return;
+  }
+  if (!input.files || !input.files[0]) return;
+
+  const report = SafeNet.getReportById(reportId);
+  if (!report || !report.evidenceHash) {
+    showToast('No evidence hash stored for this report.', 'error');
+    return;
+  }
+
+  try {
+    const buffer = await input.files[0].arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const uploadedHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const match = uploadedHash === report.evidenceHash;
+
+    result.style.display = 'block';
+    result.innerHTML = `
+      <div style="margin-bottom:0.5rem;">
+        <div class="form-label">Uploaded File Hash</div>
+        <div class="hash-display">${uploadedHash}</div>
+      </div>
+      <div class="match-badge ${match ? 'authentic' : 'tampered'}">
+        ${match ? '✅ Authentic — Hashes Match' : '❌ Tampered — Hashes Do NOT Match'}
+      </div>
+      ${match
+        ? '<p style="font-size:0.75rem;color:var(--success);margin-top:0.5rem;">The uploaded evidence file matches the original. This evidence has not been tampered with.</p>'
+        : '<p style="font-size:0.75rem;color:var(--danger);margin-top:0.5rem;">⚠️ The uploaded file does NOT match the original evidence. This file may have been altered.</p>'
+      }
+    `;
+
+    showToast(match ? 'Evidence is authentic ✅' : 'Evidence appears tampered ❌', match ? 'success' : 'error');
+  } catch (e) {
+    result.innerHTML = '<span style="color:var(--danger);">Hash computation failed.</span>';
+    result.style.display = 'block';
+  }
+}
+</script>
+</body>
+</html>

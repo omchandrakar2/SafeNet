@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafetyNet — Safety Map</title>
+  <meta name="description" content="Interactive map showing color-coded safety scores for reported locations." />
+  <link rel="stylesheet" href="../css/styles.css" />
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    #safety-map { height: 500px; }
+    /* Light map popup styling */
+    .custom-popup .leaflet-popup-content-wrapper {
+      background: rgba(255,255,255,0.96);
+      border: 1px solid rgba(108,99,255,0.18);
+      border-radius: 16px;
+      color: #1e1b4b;
+      box-shadow: 0 8px 32px rgba(108,99,255,0.15);
+      backdrop-filter: blur(12px);
+    }
+    .custom-popup .leaflet-popup-tip { background: rgba(255,255,255,0.96); }
+    .custom-popup .leaflet-popup-content { margin: 12px 16px; font-size: 0.85rem; line-height: 1.55; }
+    [data-theme="dark"] .custom-popup .leaflet-popup-content-wrapper {
+      background: rgba(26,28,42,0.96);
+      color: #f0f2ff;
+    }
+    [data-theme="dark"] .custom-popup .leaflet-popup-tip { background: rgba(26,28,42,0.96); }
+
+    /* Leaflet light tile brightness boost */
+    .leaflet-tile-pane { transition: filter 0.3s ease; }
+    [data-theme="dark"] .leaflet-tile-pane { filter: brightness(0.75) saturate(1.1); }
+
+    /* Stat mini-cards */
+    .map-stat {
+      padding: 0.75rem 1.2rem;
+      text-align: center;
+      min-width: 90px;
+    }
+    .map-stat-val {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.6rem;
+      font-weight: 800;
+      line-height: 1;
+      color: var(--accent-purple);
+    }
+    .map-stat-label {
+      font-size: 0.70rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.2rem;
+    }
+
+    /* Legend pill */
+    .legend-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <a href="../index.html" class="logo">
+    <div class="logo-icon">🛡️</div>
+    <span class="brand-text">Safety<span class="brand-accent">Net</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="../index.html"         class="nav-link"><span class="nav-icon">📊</span> Dashboard</a>
+    <a href="report.html"           class="nav-link"><span class="nav-icon">📝</span> Report</a>
+    <a href="map.html"              class="nav-link"><span class="nav-icon">🗺️</span> Safety Map</a>
+    <a href="evidence.html"         class="nav-link"><span class="nav-icon">🔒</span> Evidence Vault</a>
+  </div>
+  <div class="nav-badge">
+    <span class="badge-pill">● MCP Live</span>
+    <button class="theme-toggle" id="theme-toggle" title="Toggle dark mode">🌙</button>
+  </div>
+</nav>
+
+<div class="page-wrapper">
+  <div class="container">
+
+    <div class="page-header fade-up">
+      <div class="eyebrow">🗺️ MCP · getSafetyScores()</div>
+      <h1>Safety <span class="gradient-text">Heat Map</span></h1>
+      <p>Color-coded location markers based on live safety scores calculated by the MCP score engine.</p>
+    </div>
+
+    <!-- Legend + Stats Bar -->
+    <div class="fade-up fade-up-1" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <div class="card" style="padding:0.75rem 1.3rem;display:flex;gap:1.5rem;align-items:center;flex:1;min-width:280px;">
+        <span style="font-size:0.72rem;color:var(--text-muted);font-weight:700;letter-spacing:1px;text-transform:uppercase">LEGEND</span>
+        <span class="legend-pill"><span class="legend-dot" style="background:#10b981"></span> Safe (7–10)</span>
+        <span class="legend-pill"><span class="legend-dot" style="background:#f59e0b"></span> Medium (4–6)</span>
+        <span class="legend-pill"><span class="legend-dot" style="background:#ef4444"></span> High Risk (0–3)</span>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-shrink:0">
+        <div class="card map-stat">
+          <div class="map-stat-val" id="map-total-locations">0</div>
+          <div class="map-stat-label">Locations</div>
+        </div>
+        <div class="card map-stat">
+          <div class="map-stat-val" id="map-avg-score">--</div>
+          <div class="map-stat-label">Avg Score</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map -->
+    <div class="card fade-up fade-up-2" style="padding:0;overflow:hidden;">
+      <div id="safety-map"></div>
+    </div>
+
+    <!-- Location Cards Grid -->
+    <div style="margin-top:2rem;">
+      <div class="section-title">📍 All Scored Locations <span class="title-count" id="loc-count">0</span></div>
+      <div class="three-col" id="location-cards">
+        <div class="card" style="grid-column:1/-1">
+          <div class="empty-state">
+            <div class="empty-icon">🗺️</div>
+            <p>No scored locations yet. <a href="report.html">Report an incident →</a></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/mcp-context.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/mcp-functions.js"></script>
+<script src="../js/utils.js"></script>
+<script>
+// ─── Theme Toggle ─────────────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeBtn = document.getElementById('theme-toggle');
+function applyTheme(t) {
+  html.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('sn-theme', t);
+  // Switch tile layer
+  if (window.lightLayer && window.darkLayer && window.map) {
+    if (t === 'dark') {
+      if (window.map.hasLayer(window.lightLayer)) window.map.removeLayer(window.lightLayer);
+      window.darkLayer.addTo(window.map);
+    } else {
+      if (window.map.hasLayer(window.darkLayer)) window.map.removeLayer(window.darkLayer);
+      window.lightLayer.addTo(window.map);
+    }
+  }
+}
+themeBtn.addEventListener('click', () => applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+(function() { const s = localStorage.getItem('sn-theme'); applyTheme(s || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light')); })();
+
+// ─── Map ──────────────────────────────────────────────────────────────────────
+let map;
+function initMap() {
+  map = window.map = L.map('safety-map', { center: [20.5937, 78.9629], zoom: 5, zoomControl: true });
+
+  window.lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19,
+  });
+  window.darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19,
+  });
+
+  const currentTheme = html.getAttribute('data-theme');
+  if (currentTheme === 'dark') { window.darkLayer.addTo(map); }
+  else                         { window.lightLayer.addTo(map); }
+}
+
+function getMarkerColor(riskLevel) {
+  return { low:'#10b981', medium:'#f59e0b', high:'#ef4444' }[riskLevel] || '#8b92a5';
+}
+
+function createCircleMarker(score) {
+  const color = getMarkerColor(score.riskLevel);
+  return L.circleMarker([score.lat || 20.5, score.lng || 78.9], {
+    radius: 14 + (10 - score.score) * 1.2,
+    fillColor: color,
+    color: '#fff',
+    weight: 2.5,
+    opacity: 1,
+    fillOpacity: 0.80,
+  });
+}
+
+function renderMap() {
+  const scores = getSafetyScores();
+  document.getElementById('map-total-locations').textContent = scores.length;
+  document.getElementById('map-avg-score').textContent = scores.length
+    ? (scores.reduce((s, x) => s + x.score, 0) / scores.length).toFixed(1)
+    : '--';
+  document.getElementById('loc-count').textContent = scores.length;
+
+  map.eachLayer(l => { if (l instanceof L.CircleMarker) map.removeLayer(l); });
+  if (!scores.length) { renderLocationCards([]); return; }
+
+  const bounds = [];
+  scores.forEach(s => {
+    const lat = s.lat || 0, lng = s.lng || 0;
+    const marker = createCircleMarker(s);
+    marker.addTo(map);
+    bounds.push([lat || 20.5, lng || 78.9]);
+
+    const complaints = getComplaints().filter(c => c.location.name.toLowerCase() === s.location.toLowerCase());
+    const color = getMarkerColor(s.riskLevel);
+    const popupHtml = `
+      <div style="min-width:190px">
+        <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.3rem">📍 ${escHtml(s.location)}</div>
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.5rem">
+          <span style="font-size:1.6rem;font-weight:800;color:${color}">${s.score}</span>
+          <span style="font-size:0.75rem;color:var(--text-secondary)">/ 10 safety score</span>
+        </div>
+        <div style="font-size:0.75rem;margin-bottom:0.5rem">
+          Risk: <strong style="color:${color}">${s.riskLevel.toUpperCase()}</strong>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.4rem">${s.basedOn.length} complaint${s.basedOn.length !== 1 ? 's' : ''} reported</div>
+        ${complaints.slice(0,2).map(c => `
+          <div style="margin-top:0.35rem;padding:0.3rem 0.6rem;background:rgba(108,99,255,0.07);border-radius:8px;font-size:0.73rem;border:1px solid rgba(108,99,255,0.12)">
+            ${categoryIcon(c.category)} ${escHtml(c.title)}
+          </div>
+        `).join('')}
+      </div>
+    `;
+    marker.bindPopup(popupHtml, { className: 'custom-popup' });
+
+    if (s.riskLevel === 'high') {
+      L.circleMarker([lat || 20.5, lng || 78.9], {
+        radius: 22, fillColor: 'transparent',
+        color: '#ef4444', weight: 2, opacity: 0.4, fillOpacity: 0,
+      }).addTo(map);
+    }
+  });
+
+  if (bounds.length) { try { map.fitBounds(bounds, { padding: [60, 60] }); } catch(e) {} }
+  renderLocationCards(scores);
+}
+
+function renderLocationCards(scores) {
+  const el = document.getElementById('location-cards');
+  if (!scores.length) {
+    el.innerHTML = `<div class="card" style="grid-column:1/-1">
+      <div class="empty-state"><div class="empty-icon">🗺️</div>
+      <p>No scored locations yet. <a href="report.html">Report an incident →</a></p></div></div>`;
+    return;
+  }
+  el.innerHTML = scores.map(s => {
+    const color = getMarkerColor(s.riskLevel);
+    const pct   = (s.score / 10) * 100;
+    return `
+    <div class="card" style="padding:1.3rem">
+      <div style="display:flex;align-items:center;gap:0.85rem;margin-bottom:0.85rem">
+        <div style="width:50px;height:50px;border-radius:50%;background:conic-gradient(${color} ${pct}%, rgba(107,114,128,0.12) 0);
+             display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0">
+          <div style="width:38px;height:38px;border-radius:50%;background:var(--bg-secondary);display:flex;align-items:center;justify-content:center">
+            <span style="font-weight:800;font-size:0.95rem;color:${color}">${s.score}</span>
+          </div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:0.875rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(s.location)}</div>
+          <div style="font-size:0.72rem;color:var(--text-secondary)">${s.basedOn.length} incident${s.basedOn.length !== 1 ? 's' : ''}</div>
+        </div>
+        <span class="chip chip-${riskColor(s.riskLevel)}">${s.riskLevel.toUpperCase()}</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:0.4rem;font-size:0.72rem;color:var(--text-muted)">
+        <span>Score</span><span>${s.score} / 10</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  initMap();
+  renderMap();
+  initNav && initNav();
+  MCPContext.on('complaint:added', renderMap);
+  MCPContext.on('score:updated',   renderMap);
+});
+</script>
+</body>
+</html>

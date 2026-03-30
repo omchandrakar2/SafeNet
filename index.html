@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeNet — Real‑Time Safety Map</title>
+  <meta name="description" content="Community-driven real-time safety mapping. View incidents, report dangers, and get safer routes." />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet Routing Machine -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+  <!-- MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+</head>
+<body>
+
+<!-- ─── Loading overlay ─────────────────────────────── -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner-ring"></div>
+  <div class="loading-text">Loading SafeNet…</div>
+</div>
+
+<!-- ─── Navbar ──────────────────────────────────────── -->
+<nav class="navbar">
+  <a href="index.html" class="nav-logo">
+    <div class="nav-logo-icon">🛡️</div>
+    <div class="nav-logo-text">Safe<span>Net</span></div>
+  </a>
+  <div class="nav-pill">
+    <span>●</span> <span id="nav-count">0</span> Live Reports
+  </div>
+  <div class="nav-spacer"></div>
+  <button class="nav-btn" id="theme-toggle" title="Toggle dark mode">🌙</button>
+  <button class="nav-btn" id="panel-toggle" title="My Reports" onclick="togglePanel()">📋</button>
+  <div class="nav-avatar" id="user-avatar" onclick="toggleUserMenu()" title="User account">?</div>
+  <!-- User dropdown -->
+  <div id="user-menu" style="
+    display:none; position:absolute; top:calc(var(--nav-h) + 0.5rem); right:1.25rem;
+    background: var(--bg-modal); border: 1px solid var(--glass-border);
+    border-radius: var(--r-md); box-shadow: var(--shadow-lg);
+    padding: 0.75rem; min-width: 180px; z-index: 1200;
+    font-size: 0.85rem; color: var(--text);
+  ">
+    <div id="user-email" style="font-weight:600;padding:0.4rem 0.6rem;border-bottom:1px solid var(--glass-border);margin-bottom:0.4rem;word-break:break-all;"></div>
+    <div id="user-role-badge" style="padding:0.2rem 0.6rem;margin-bottom:0.4rem;font-size:0.72rem;"></div>
+    <button onclick="handleSignOut()" class="btn btn-danger btn-sm btn-block" style="margin-top:0.4rem;">Sign Out</button>
+    <div id="guest-sign-in" style="display:none;margin-top:0.4rem;">
+      <a href="login.html" class="btn btn-primary btn-sm btn-block">Sign In / Sign Up</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── Sidebar ─────────────────────────────────────── -->
+<button class="nav-btn" id="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar"
+  style="position:fixed;top:calc(var(--nav-h)+1rem);left:1rem;z-index:600;display:none;">☰</button>
+
+<aside class="sidebar" id="sidebar">
+  <!-- Search -->
+  <div class="sidebar-section">
+    <div class="sidebar-label">Search Location</div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="search-input"
+        placeholder="Search any location…" autocomplete="off" />
+      <div id="search-results" style="
+        position:absolute; top:100%; left:0; right:0; margin-top:0.25rem;
+        background:var(--bg-modal); border:1px solid var(--glass-border);
+        border-radius:var(--r-md); box-shadow:var(--shadow-md);
+        z-index:900; display:none; max-height:200px; overflow-y:auto;
+      "></div>
+    </div>
+  </div>
+  <!-- Filters -->
+  <div class="sidebar-section">
+    <div class="sidebar-label">Filter by Type</div>
+    <div class="filter-grid" id="filter-grid">
+      <button class="filter-chip active" onclick="setFilter(this,'all')">All</button>
+      <button class="filter-chip" onclick="setFilter(this,'theft')">🔓 Theft</button>
+      <button class="filter-chip" onclick="setFilter(this,'harassment')">😤 Harassment</button>
+      <button class="filter-chip" onclick="setFilter(this,'assault')">🥊 Assault</button>
+      <button class="filter-chip" onclick="setFilter(this,'stalking')">👁 Stalking</button>
+      <button class="filter-chip" onclick="setFilter(this,'unsafe')">⚠️ Unsafe</button>
+      <button class="filter-chip" onclick="setFilter(this,'vandalism')">🔨 Vandalism</button>
+    </div>
+  </div>
+  <!-- Stats -->
+  <div class="sidebar-section">
+    <div class="sidebar-label">Live Stats</div>
+    <div class="stat-row">
+      <div class="stat-mini">
+        <div class="stat-mini-val" id="total-count">0</div>
+        <div class="stat-mini-lbl">Reports</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-val" id="high-risk-count" style="color:#ef4444">0</div>
+        <div class="stat-mini-lbl">High Risk</div>
+      </div>
+      <div class="stat-mini">
+        <div class="stat-mini-val" id="today-count" style="color:#f59e0b">0</div>
+        <div class="stat-mini-lbl">Today</div>
+      </div>
+    </div>
+  </div>
+  <!-- Legend -->
+  <div class="sidebar-section">
+    <div class="sidebar-label">Risk Legend</div>
+    <div class="risk-legend">
+      <div class="risk-row"><div class="risk-dot" style="background:#10b981"></div> Low Risk (0–2)</div>
+      <div class="risk-row"><div class="risk-dot" style="background:#f59e0b"></div> Medium Risk (3–5)</div>
+      <div class="risk-row"><div class="risk-dot" style="background:#ef4444"></div> High Risk (6+)</div>
+    </div>
+  </div>
+  <!-- Toggles -->
+  <div class="sidebar-section">
+    <div class="sidebar-label">Visibility</div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem;">
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.82rem;color:var(--text-2);">
+        <input type="checkbox" id="toggle-zones" checked onchange="toggleRiskZones()" style="accent-color:var(--primary);" />
+        Show risk zones
+      </label>
+      <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.82rem;color:var(--text-2);">
+        <input type="checkbox" id="toggle-cluster" checked onchange="toggleClustering()" style="accent-color:var(--primary);" />
+        Marker clustering
+      </label>
+    </div>
+  </div>
+</aside>
+
+<!-- ─── Map ─────────────────────────────────────────── -->
+<div id="map"></div>
+
+<!-- ─── FABs ────────────────────────────────────────── -->
+<div class="fab-group">
+  <button class="fab fab-sos" onclick="triggerSOS()" title="Emergency SOS">SOS</button>
+  <button class="fab fab-route" onclick="toggleRoutePanel()" title="Plan a safe route">🗺️</button>
+  <button class="fab fab-loc" onclick="goToMyLocation()" title="Go to my location">📍</button>
+  <button class="fab fab-report" onclick="openReportModal(null,null)" title="Report an incident">
+    <span>➕</span> <span>Report</span>
+  </button>
+</div>
+
+<!-- ─── Report Modal ────────────────────────────────── -->
+<div class="modal-overlay" id="report-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📍 Report Incident</div>
+      <button class="modal-close" onclick="closeModal('report-modal')">✕</button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:1.25rem;">
+      Click the map to pin a location, or use your current position.
+      Reports are secured with SHA-256 integrity hashing.
+    </p>
+    <!-- Location display -->
+    <div style="background:rgba(108,99,255,0.07);border:1.5px solid rgba(108,99,255,0.18);border-radius:var(--r-sm);padding:0.65rem 1rem;font-size:0.82rem;color:var(--primary);margin-bottom:1.1rem;display:flex;align-items:center;gap:0.5rem;">
+      <span>📌</span>
+      <span id="report-coords">Click map to set location</span>
+    </div>
+    <div style="display:flex;gap:0.5rem;margin-bottom:1.1rem;">
+      <button class="btn btn-ghost btn-sm" onclick="useMyLocation()">📡 My Location</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('report-modal');isPickingLocation=true;showToast('Click anywhere on the map to place pin','info')">🗺 Pick on Map</button>
+    </div>
+    <!-- Incident type -->
+    <div class="form-group">
+      <div class="form-label">Incident Type *</div>
+      <div class="type-grid">
+        <div class="type-card" data-type="theft"      onclick="selectType('theft')">     <span class="type-emoji">🔓</span><div class="type-name">Theft</div></div>
+        <div class="type-card" data-type="harassment" onclick="selectType('harassment')"><span class="type-emoji">😤</span><div class="type-name">Harassment</div></div>
+        <div class="type-card" data-type="assault"    onclick="selectType('assault')">   <span class="type-emoji">🥊</span><div class="type-name">Assault</div></div>
+        <div class="type-card" data-type="stalking"   onclick="selectType('stalking')">  <span class="type-emoji">👁</span><div class="type-name">Stalking</div></div>
+        <div class="type-card" data-type="unsafe"     onclick="selectType('unsafe')">    <span class="type-emoji">⚠️</span><div class="type-name">Unsafe Area</div></div>
+        <div class="type-card" data-type="vandalism"  onclick="selectType('vandalism')"> <span class="type-emoji">🔨</span><div class="type-name">Vandalism</div></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="report-desc">Description</label>
+      <textarea id="report-desc" class="form-control" placeholder="Briefly describe what happened… (optional)" rows="3"></textarea>
+    </div>
+    <!-- Evidence upload -->
+    <div class="form-group">
+      <label class="form-label" for="evidence-file">Upload Evidence (optional)</label>
+      <input type="file" id="evidence-file" class="form-control" accept="image/*,video/*,.pdf" onchange="handleEvidenceFile(this)" />
+      <div id="evidence-status" style="margin-top:0.4rem;font-size:0.75rem;"></div>
+    </div>
+    <input type="hidden" id="report-lat" />
+    <input type="hidden" id="report-lng" />
+    <button class="btn btn-primary btn-block btn-lg" onclick="submitReport()" id="submit-report-btn">
+      🚨 Submit Report
+    </button>
+    <p style="text-align:center;font-size:0.7rem;color:var(--text-3);margin-top:0.6rem;">
+      🔐 Stored securely · SHA-256 hashed · Linked to your account
+    </p>
+  </div>
+</div>
+
+<!-- ─── SOS Modal ───────────────────────────────────── -->
+<div class="modal-overlay" id="sos-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <div class="modal-title" style="color:#ef4444">🚨 Emergency SOS</div>
+      <button class="modal-close" onclick="closeModal('sos-modal')">✕</button>
+    </div>
+    <div class="sos-content">
+      <div class="sos-icon">🆘</div>
+      <div class="sos-text">
+        <strong>Are you in immediate danger?</strong><br/>
+        Call emergency services. SafeNet will share your location in a report automatically.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.6rem;">
+        <a href="tel:112" class="btn btn-danger btn-block btn-lg" style="font-size:1rem;justify-content:center;">
+          📞 Call Emergency (112)
+        </a>
+        <button class="btn btn-primary btn-block" onclick="sosReportLocation()">
+          📍 Share My Location & Alert
+        </button>
+        <button class="btn btn-ghost btn-block" onclick="closeModal('sos-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Route Panel ─────────────────────────────────── -->
+<div class="route-panel" id="route-panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;">
+    <div class="route-panel-title">🗺️ Route Planner</div>
+    <button class="modal-close" onclick="toggleRoutePanel()">✕</button>
+  </div>
+  <div class="route-inputs">
+    <div>
+      <label class="form-label">From</label>
+      <input type="text" class="form-control" id="route-from" placeholder="Start location or 'me'" />
+    </div>
+    <div>
+      <label class="form-label">To</label>
+      <input type="text" class="form-control" id="route-to" placeholder="Destination" />
+    </div>
+  </div>
+  <div class="route-type-toggle">
+    <div class="route-tag active fastest" id="tag-fastest" onclick="selectRouteType('fastest')">⚡ Fastest</div>
+    <div class="route-tag safest"         id="tag-safest"  onclick="selectRouteType('safest')">🛡️ Safest</div>
+  </div>
+  <div style="display:flex;gap:0.5rem;">
+    <button class="btn btn-primary" style="flex:1;" onclick="planRoute()">Get Route</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearRoute()">Clear</button>
+  </div>
+  <div id="route-info" style="margin-top:0.75rem;font-size:0.8rem;color:var(--text-2);display:none;"></div>
+</div>
+
+<!-- ─── My Reports Panel ────────────────────────────── -->
+<div class="panel" id="reports-panel">
+  <div class="panel-header">
+    <div class="panel-title">📋 My Reports</div>
+    <button class="modal-close" onclick="togglePanel()">✕</button>
+  </div>
+  <div class="panel-body" id="my-reports-list">
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-text">No reports yet.</div>
+    </div>
+  </div>
+  <div style="padding:1rem 1.25rem;border-top:1px solid var(--glass-border);">
+    <div id="user-stats" style="font-size:0.78rem;color:var(--text-3);text-align:center;"></div>
+  </div>
+</div>
+
+<!-- ─── Toasts ──────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ─── Scripts ─────────────────────────────────────── -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.min.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="firebase.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
