@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeNet — Login / Sign Up</title>
+  <meta name="description" content="Join SafeNet — community-driven real-time safety mapping platform." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- Dark mode toggle (top-right) -->
+<button class="nav-btn" id="theme-toggle"
+  style="position:fixed;top:1rem;right:1rem;z-index:100;"
+  title="Toggle dark mode">🌙</button>
+
+<div class="auth-page" style="z-index:1;position:relative;">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div class="auth-logo-icon">🛡️</div>
+      <div class="auth-title">Safe<span class="gradient-text">Net</span></div>
+      <div class="auth-subtitle">Community-driven real-time safety mapping</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"  onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab"        id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <!-- Error message -->
+    <div id="auth-error" style="
+      display:none;
+      background:rgba(239,68,68,0.10);
+      border:1.5px solid rgba(239,68,68,0.25);
+      border-radius:10px;
+      padding:0.75rem 1rem;
+      font-size:0.82rem;
+      color:#b91c1c;
+      margin-bottom:1rem;
+    "></div>
+
+    <!-- ─── Login Form ─── -->
+    <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email Address</label>
+        <input type="email" id="login-email" class="form-control"
+               placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="login-pass">Password</label>
+        <div style="position:relative">
+          <input type="password" id="login-pass" class="form-control"
+                 placeholder="••••••••" required autocomplete="current-password" style="padding-right:3rem" />
+          <button type="button" onclick="togglePwd('login-pass')"
+            style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:1rem;">👁️</button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="login-btn">
+        <span>Sign In</span>
+      </button>
+    </form>
+
+    <!-- ─── Signup Form ─── -->
+    <form id="signup-form" onsubmit="handleSignup(event)" style="display:none;">
+      <div class="form-group">
+        <label class="form-label" for="signup-name">Full Name</label>
+        <input type="text" id="signup-name" class="form-control"
+               placeholder="Jane Doe" required autocomplete="name" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="signup-email">Email Address</label>
+        <input type="email" id="signup-email" class="form-control"
+               placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="signup-pass">Password</label>
+        <div style="position:relative">
+          <input type="password" id="signup-pass" class="form-control"
+                 placeholder="Min. 6 characters" required autocomplete="new-password"
+                 minlength="6" style="padding-right:3rem" />
+          <button type="button" onclick="togglePwd('signup-pass')"
+            style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-3);font-size:1rem;">👁️</button>
+        </div>
+        <div id="pwd-strength" style="height:4px;border-radius:2px;margin-top:0.4rem;background:rgba(107,114,128,0.12);overflow:hidden;">
+          <div id="pwd-bar" style="height:100%;width:0%;border-radius:2px;transition:all 0.3s ease;"></div>
+        </div>
+        <div id="pwd-hint" style="font-size:0.68rem;color:var(--text-3);margin-top:0.2rem;"></div>
+      </div>
+
+      <!-- ─── Role Selection ─── -->
+      <div class="form-group">
+        <label class="form-label">Select Role</label>
+        <div class="role-selector">
+          <div class="role-card selected" data-role="user" onclick="selectRole('user')">
+            <div class="role-icon">👤</div>
+            <div class="role-name">User</div>
+          </div>
+          <div class="role-card" data-role="admin" onclick="selectRole('admin')">
+            <div class="role-icon">🔧</div>
+            <div class="role-name">Admin</div>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="signup-btn">
+        <span>Create Account</span>
+      </button>
+    </form>
+
+    <div class="auth-divider">or continue as</div>
+
+    <button type="button" class="btn btn-ghost btn-block"
+      onclick="continueAsGuest()"
+      style="font-size:0.85rem;">
+      👀 View Map (Guest Mode)
+    </button>
+
+    <p style="text-align:center;font-size:0.72rem;color:var(--text-3);margin-top:1.25rem;line-height:1.6;">
+      By continuing, you agree to our
+      <a href="#" style="color:var(--primary);text-decoration:none;font-weight:600;">Terms of Service</a>
+      and
+      <a href="#" style="color:var(--primary);text-decoration:none;font-weight:600;">Privacy Policy</a>.
+    </p>
+
+  </div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay hidden" id="loading">
+  <div class="spinner-ring"></div>
+  <div class="loading-text" id="loading-text">Signing in…</div>
+</div>
+
+<!-- Auth + Data Module -->
+<script src="firebase.js"></script>
+<script>
+/* ─── Theme ───────────────────────────────────────── */
+const html = document.documentElement;
+const themeBtn = document.getElementById('theme-toggle');
+function applyTheme(t) {
+  html.setAttribute('data-theme', t);
+  themeBtn.textContent = t === 'dark' ? '☀️' : '🌙';
+  localStorage.setItem('sn-theme', t);
+}
+themeBtn.addEventListener('click', () => applyTheme(html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'));
+(function(){
+  const s = localStorage.getItem('sn-theme');
+  applyTheme(s || (matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'));
+})();
+
+/* ─── Redirect if already logged in ───────────────── */
+SafeNet.onAuthChange(user => {
+  if (user) {
+    const role = SafeNet.getUserRole();
+    window.location.href = role === 'admin' ? 'admin.html' : 'index.html';
+  }
+});
+
+/* ─── Tab switcher ────────────────────────────────── */
+function switchTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('login-form').style.display  = isLogin ? '' : 'none';
+  document.getElementById('signup-form').style.display = isLogin ? 'none' : '';
+  document.getElementById('tab-login').classList.toggle('active',  isLogin);
+  document.getElementById('tab-signup').classList.toggle('active', !isLogin);
+  hideError();
+}
+
+/* ─── Error / Loading helpers ─────────────────────── */
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('auth-error').style.display = 'none'; }
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg;
+  document.getElementById('loading').classList.remove('hidden');
+}
+function hideLoading() { document.getElementById('loading').classList.add('hidden'); }
+
+/* ─── Password toggle ────────────────────────────── */
+function togglePwd(inputId) {
+  const inp = document.getElementById(inputId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+/* ─── Password strength ──────────────────────────── */
+document.getElementById('signup-pass').addEventListener('input', function() {
+  const v = this.value;
+  const bar = document.getElementById('pwd-bar');
+  const hint = document.getElementById('pwd-hint');
+  let strength = 0;
+  if (v.length >= 6)  strength++;
+  if (v.length >= 10) strength++;
+  if (/[A-Z]/.test(v)) strength++;
+  if (/[0-9]/.test(v)) strength++;
+  if (/[^A-Za-z0-9]/.test(v)) strength++;
+  const pcts   = ['0%','25%','50%','75%','100%'];
+  const colors = ['transparent','#ef4444','#f59e0b','#3b82f6','#10b981'];
+  const labels = ['','Weak','Fair','Good','Strong'];
+  bar.style.width = pcts[strength];
+  bar.style.background = colors[strength];
+  hint.textContent = labels[strength] ? `Password strength: ${labels[strength]}` : '';
+  hint.style.color = colors[strength];
+});
+
+/* ─── Role Selection ─────────────────────────────── */
+let selectedRole = 'user';
+function selectRole(role) {
+  selectedRole = role;
+  document.querySelectorAll('.role-card').forEach(c => {
+    c.classList.toggle('selected', c.dataset.role === role);
+  });
+}
+
+/* ─── Login ───────────────────────────────────────── */
+async function handleLogin(e) {
+  e.preventDefault(); hideError();
+  const email = document.getElementById('login-email').value.trim();
+  const pass  = document.getElementById('login-pass').value;
+  showLoading('Signing in…');
+  try {
+    const user = await SafeNet.signIn(email, pass);
+    // Redirect based on role
+    window.location.href = user.role === 'admin' ? 'admin.html' : 'index.html';
+  } catch(err) {
+    hideLoading();
+    showError(friendlyError(err.code));
+  }
+}
+
+/* ─── Signup ──────────────────────────────────────── */
+async function handleSignup(e) {
+  e.preventDefault(); hideError();
+  const name  = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass  = document.getElementById('signup-pass').value;
+  if (pass.length < 6) { showError('Password must be at least 6 characters.'); return; }
+  showLoading('Creating your account…');
+  try {
+    const user = await SafeNet.signUp(email, pass, name, selectedRole);
+    window.location.href = user.role === 'admin' ? 'admin.html' : 'index.html';
+  } catch(err) {
+    hideLoading();
+    showError(friendlyError(err.code));
+  }
+}
+
+/* ─── Guest Mode ──────────────────────────────────── */
+function continueAsGuest() {
+  localStorage.setItem('sn-guest', '1');
+  window.location.href = 'index.html';
+}
+
+/* ─── Friendly error messages ─────────────────────── */
+function friendlyError(code) {
+  const map = {
+    'auth/user-not-found':        'No account found with this email.',
+    'auth/wrong-password':        'Incorrect password. Please try again.',
+    'auth/email-already-in-use':  'This email is already registered. Try signing in.',
+    'auth/invalid-email':         'Please enter a valid email address.',
+    'auth/weak-password':         'Password should be at least 6 characters.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+    'auth/too-many-requests':     'Too many attempts. Please try again later.',
+  };
+  return map[code] || 'Something went wrong. Please try again.';
+}
+</script>
+</body>
+</html>
